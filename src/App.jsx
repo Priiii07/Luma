@@ -108,6 +108,8 @@ function App() {
         isOpen={showTaskSidebar}
         onClose={() => setShowTaskSidebar(false)}
         onTaskCreated={handleTaskCreated}
+        cycles={cycles}
+        tasks={tasks}
       />
       <PeriodSidebar
         isOpen={showPeriodSidebar}

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
-import { createTask } from '../../utils/storageHelpers'
+import { createTask, updateTask } from '../../utils/storageHelpers'
+import { scheduleTask } from '../../utils/taskScheduler'
 
-function TaskSidebar({ isOpen, onClose, onTaskCreated }) {
+function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }) {
     const [taskName, setTaskName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
     const [deadline, setDeadline] = useState('')
@@ -29,7 +29,11 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated }) {
             }
 
             // Save to IndexedDB
-            await createTask(task)
+            const taskId = await createTask(task)
+
+            // Compute scheduled date — works with or without cycle data
+            const scheduledDate = scheduleTask(task, tasks, cycles)
+            await updateTask(taskId, { scheduledDate })
 
             // Notify parent to refresh tasks
             if (onTaskCreated) {

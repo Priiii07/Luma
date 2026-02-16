@@ -14,9 +14,9 @@ function CalendarDay({ date, phase, isOtherMonth, isToday, tasks, onClick }) {
     }
 
     const energyColors = {
-        'high-energy': 'border-l-purple-600',
-        'medium-energy': 'border-l-orange-500',
-        'low-energy': 'border-l-blue-500'
+        high: 'border-l-purple-600',
+        medium: 'border-l-orange-500',
+        low: 'border-l-blue-500'
     }
 
     return (
@@ -44,7 +44,7 @@ function CalendarDay({ date, phase, isOtherMonth, isToday, tasks, onClick }) {
                     className={`
             text-xs text-gray-700 bg-white px-2 py-1 rounded mt-1
             overflow-hidden text-ellipsis whitespace-nowrap
-            shadow-sm border-l-3 ${energyColors[task.energy]}
+            shadow-sm border-l-3 ${energyColors[task.energyLevel] || 'border-l-gray-400'}
           `}
                 >
                     {task.name}
