@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
-import { logCycle, updateAllCycleLengths, getCycleStats } from '../../utils/storageHelpers'
+import { format, parseISO } from 'date-fns'
+import { logCycle, updateAllCycleLengths, getCycleStats, db } from '../../utils/storageHelpers'
 
-function PeriodSidebar({ isOpen, onClose, onCycleLogged }) {
+function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
     const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'))
     const [endDate, setEndDate] = useState('')
     const [cycleStats, setCycleStats] = useState(null)
     const [loading, setLoading] = useState(false)
+    // Holds the existing cycle if user tries to log a duplicate month
+    const [duplicateWarning, setDuplicateWarning] = useState(null)
 
     // Load cycle statistics when sidebar opens
     useEffect(() => {
@@ -24,38 +26,48 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged }) {
         }
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    // Core save logic — called both on first submit (no duplicate) and after user confirms replace
+    const saveCycle = async () => {
         setLoading(true)
-
         try {
-            // Log the cycle
-            await logCycle({
-                startDate,
-                endDate: endDate || null
-            })
-
-            // Update cycle lengths for all cycles
+            await logCycle({ startDate, endDate: endDate || null })
             await updateAllCycleLengths()
-
-            // Notify parent component and wait for it to complete
-            if (onCycleLogged) {
-                await onCycleLogged() // ✅ Await to ensure state updates complete
-            }
-
-            // Reset form
+            if (onCycleLogged) await onCycleLogged()
             setStartDate(format(new Date(), 'yyyy-MM-dd'))
             setEndDate('')
-
-            // Reload stats
+            setDuplicateWarning(null)
             await loadStats()
-
             onClose()
         } catch (error) {
             console.error('Error logging period:', error)
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        // Check for a same-month entry (non-overlapping duplicates slip past the DB overlap check)
+        const newMonth = startDate.substring(0, 7) // 'YYYY-MM'
+        const existing = cycles.find(c => c.startDate.substring(0, 7) === newMonth)
+
+        if (existing) {
+            // Pause and ask the user what to do
+            setDuplicateWarning(existing)
+            return
+        }
+
+        await saveCycle()
+    }
+
+    // User chose to replace the existing entry
+    const handleConfirmReplace = async () => {
+        // Delete the duplicate from DB before calling logCycle so there's no conflict
+        if (duplicateWarning?.id) {
+            await db.cycles.delete(duplicateWarning.id)
+        }
+        await saveCycle()
     }
 
     return (
@@ -85,6 +97,37 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged }) {
                 </div>
 
                 <div className="px-6 py-6">
+                    {/* Duplicate month confirmation prompt */}
+                    {duplicateWarning && (
+                        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                            <p className="text-sm font-medium text-amber-900 mb-1">
+                                Period already logged for this month
+                            </p>
+                            <p className="text-xs text-amber-700 mb-4">
+                                You already have a period logged starting{' '}
+                                <strong>{format(parseISO(duplicateWarning.startDate), 'MMM d, yyyy')}</strong>.
+                                Replace it with the new dates?
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmReplace}
+                                    disabled={loading}
+                                    className="flex-1 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    {loading ? 'Replacing...' : 'Replace'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDuplicateWarning(null)}
+                                    className="flex-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit}>
                         <div className="mb-5">
                             <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -7,6 +7,7 @@ import SmartBanner from './components/Task/SmartBanner'
 import Calendar from './components/Calendar/Calendar'
 import TaskSidebar from './components/Task/TaskSidebar'
 import PeriodSidebar from './components/Cycle/PeriodSidebar'
+import OnboardingFlow from './components/Onboarding/OnboardingFlow'
 import { getAllCycles, getAllTasks } from './utils/storageHelpers'
 import { getCurrentPhaseInfo } from './utils/cycleHelpers' // Keep this import for now, as the instruction doesn't explicitly remove it from here, only adds it to storageHelpers. This might be a future refactor.
 
@@ -60,6 +61,11 @@ function App() {
     return loadCycles()
   }
 
+  // Called when onboarding finishes — reload cycles so the overlay hides
+  const handleOnboardingComplete = async () => {
+    await loadCycles()
+  }
+
   const handleTaskCreated = () => {
     // Reload tasks when new one is created
     loadTasks()
@@ -83,6 +89,8 @@ function App() {
     setShowTaskSidebar(false)
   }
 
+  const isOnboarded = cycles.length >= 2
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden my-5">
@@ -97,6 +105,8 @@ function App() {
           onNextMonth={handleNextMonth}
           onAddTask={handleAddTask}
           onLogPeriod={handleLogPeriod}
+          isOnboarded={isOnboarded}
+          cyclesLogged={cycles.length}
         />
         <Legend />
         <SmartBanner phase={currentPhaseInfo.phase} />
@@ -115,7 +125,16 @@ function App() {
         isOpen={showPeriodSidebar}
         onClose={() => setShowPeriodSidebar(false)}
         onCycleLogged={handleCycleLogged}
+        cycles={cycles}
       />
+
+      {/* Onboarding overlay — shown until 2 cycles are logged */}
+      {!isOnboarded && (
+        <OnboardingFlow
+          cyclesLogged={cycles.length}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
     </div>
   )
 }
