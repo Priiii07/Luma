@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle-Aware Task Planner - Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .current-phase {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .phase-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #9d4edd;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .month-nav button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .month-nav button:hover {
+            background: #f0f0f0;
+        }
+
+        .month-nav h2 {
+            font-size: 20px;
+            color: #333;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        .legend {
+            display: flex;
+            gap: 24px;
+            padding: 16px 24px;
+            background: #fafafa;
+            border-bottom: 1px solid #e5e5e5;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .calendar {
+            padding: 24px;
+        }
+
+        .weekday-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            padding: 8px;
+            text-transform: uppercase;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .day {
+            min-height: 100px;
+            border-radius: 8px;
+            padding: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .day.other-month {
+            opacity: 0.3;
+        }
+
+        .day.today .date-number {
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* Phase colors */
+        .day.menstrual {
+            background: #ffccd5;
+        }
+
+        .day.follicular {
+            background: #ffe5b4;
+        }
+
+        .day.ovulation {
+            background: #e0b0ff;
+        }
+
+        .day.luteal {
+            background: #e5e5e5;
+        }
+
+        .date-number {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .day.has-tasks .date-number {
+            border: 2px solid #333;
+            background: rgba(255,255,255,0.5);
+        }
+
+        .task-indicator {
+            font-size: 11px;
+            color: #666;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .task-indicator.high-energy {
+            border-left: 3px solid #9d4edd;
+        }
+
+        .task-indicator.medium-energy {
+            border-left: 3px solid #ffa500;
+        }
+
+        .task-indicator.low-energy {
+            border-left: 3px solid #4a90e2;
+        }
+
+        .energy-badge {
+            font-size: 10px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .overload-banner {
+            margin: 16px 24px;
+            padding: 12px 16px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .sidebar {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .sidebar-content {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info-note {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid {
+                gap: 4px;
+            }
+            
+            .day {
+                min-height: 80px;
+                padding: 4px;
+            }
+
+            .task-indicator {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+
+            .sidebar {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 Cycle-Aware Planner</h1>
+            <div class="current-phase">
+                <div class="phase-dot"></div>
+                <span>Ovulation Phase • Day 14</span>
+            </div>
+        </div>
+
+        <div class="nav">
+            <div class="month-nav">
+                <button>‹</button>
+                <h2>February 2026</h2>
+                <button>›</button>
+            </div>
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="toggleSidebar('period')">📅 Log Period</button>
+                <button class="btn btn-primary" onclick="toggleSidebar('task')">+ Add Task</button>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffccd5;"></div>
+                <span>🟥 Menstrual (Low Energy)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffe5b4;"></div>
+                <span>🟧 Follicular (Medium Energy)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e0b0ff;"></div>
+                <span>🟪 Ovulation (High Energy)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e5e5e5;"></div>
+                <span>⬜ Luteal (Prep Week)</span>
+            </div>
+        </div>
+
+        <div class="overload-banner">
+            <span>💡</span>
+            <span>You're in a high energy phase! Consider pulling forward some medium tasks from next week.</span>
+        </div>
+
+        <div class="calendar">
+            <div class="weekday-header">
+                <div class="weekday">Sun</div>
+                <div class="weekday">Mon</div>
+                <div class="weekday">Tue</div>
+                <div class="weekday">Wed</div>
+                <div class="weekday">Thu</div>
+                <div class="weekday">Fri</div>
+                <div class="weekday">Sat</div>
+            </div>
+
+            <div class="calendar-grid">
+                <!-- Week 1 -->
+                <div class="day other-month menstrual">
+                    <div class="date-number">26</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">27</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">28</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">29</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">30</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">31</div>
+                </div>
+                <div class="day menstrual has-tasks">
+                    <div class="date-number">1</div>
+                    <div class="task-indicator low-energy">Rest & read book</div>
+                </div>
+
+                <!-- Week 2 -->
+                <div class="day menstrual">
+                    <div class="date-number">2</div>
+                </div>
+                <div class="day menstrual has-tasks">
+                    <div class="date-number">3</div>
+                    <div class="task-indicator low-energy">Light emails</div>
+                </div>
+                <div class="day menstrual">
+                    <div class="date-number">4</div>
+                </div>
+                <div class="day follicular">
+                    <div class="date-number">5</div>
+                </div>
+                <div class="day follicular has-tasks">
+                    <div class="date-number">6</div>
+                    <div class="task-indicator medium-energy">Client meeting prep</div>
+                </div>
+                <div class="day follicular">
+                    <div class="date-number">7</div>
+                </div>
+                <div class="day follicular has-tasks">
+                    <div class="date-number">8</div>
+                    <div class="task-indicator medium-energy">Weekly grocery</div>
+                    <div class="task-indicator medium-energy">Meal prep</div>
+                </div>
+
+                <!-- Week 3 -->
+                <div class="day follicular has-tasks">
+                    <div class="date-number">9</div>
+                    <div class="task-indicator medium-energy">Design review</div>
+                </div>
+                <div class="day follicular">
+                    <div class="date-number">10</div>
+                </div>
+                <div class="day ovulation">
+                    <div class="date-number">11</div>
+                </div>
+                <div class="day ovulation has-tasks">
+                    <div class="date-number">12</div>
+                    <div class="task-indicator high-energy">Launch presentation</div>
+                </div>
+                <div class="day ovulation has-tasks">
+                    <div class="date-number">13</div>
+                    <div class="task-indicator high-energy">Strategy doc</div>
+                    <div class="task-indicator high-energy">Team workshop</div>
+                </div>
+                <div class="day ovulation today has-tasks">
+                    <div class="date-number">14</div>
+                    <div class="task-indicator high-energy">Q1 Planning</div>
+                </div>
+                <div class="day ovulation has-tasks">
+                    <div class="date-number">15</div>
+                    <div class="task-indicator high-energy">Code review sprint</div>
+                    <div class="task-indicator medium-energy">Documentation</div>
+                </div>
+
+                <!-- Week 4 -->
+                <div class="day ovulation has-tasks">
+                    <div class="date-number">16</div>
+                    <div class="task-indicator high-energy">Prototype demo</div>
+                </div>
+                <div class="day ovulation">
+                    <div class="date-number">17</div>
+                </div>
+                <div class="day luteal">
+                    <div class="date-number">18</div>
+                </div>
+                <div class="day luteal has-tasks">
+                    <div class="date-number">19</div>
+                    <div class="task-indicator medium-energy">Prep next week tasks</div>
+                </div>
+                <div class="day luteal has-tasks">
+                    <div class="date-number">20</div>
+                    <div class="task-indicator low-energy">File expenses</div>
+                </div>
+                <div class="day luteal">
+                    <div class="date-number">21</div>
+                </div>
+                <div class="day luteal has-tasks">
+                    <div class="date-number">22</div>
+                    <div class="task-indicator medium-energy">Prep comfort items</div>
+                </div>
+
+                <!-- Week 5 -->
+                <div class="day luteal">
+                    <div class="date-number">23</div>
+                </div>
+                <div class="day luteal">
+                    <div class="date-number">24</div>
+                </div>
+                <div class="day luteal">
+                    <div class="date-number">25</div>
+                </div>
+                <div class="day menstrual">
+                    <div class="date-number">26</div>
+                </div>
+                <div class="day menstrual">
+                    <div class="date-number">27</div>
+                </div>
+                <div class="day menstrual">
+                    <div class="date-number">28</div>
+                </div>
+                <div class="day other-month menstrual">
+                    <div class="date-number">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar for adding tasks -->
+    <div class="sidebar" id="taskSidebar">
+        <div class="sidebar-header">
+            <h3>Add New Task</h3>
+            <button class="close-btn" onclick="toggleSidebar('task')">×</button>
+        </div>
+        <div class="sidebar-content">
+            <form>
+                <div class="form-group">
+                    <label>Task Name *</label>
+                    <input type="text" placeholder="e.g., Finish presentation slides" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Energy Type</label>
+                    <select>
+                        <option value="">Auto-detect</option>
+                        <option value="low">Low Energy</option>
+                        <option value="medium">Medium Energy</option>
+                        <option value="high">High Energy</option>
+                    </select>
+                    <div class="info-note">We'll suggest the best time based on this</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Deadline (Optional)</label>
+                    <input type="date">
+                    <div class="info-note">We'll prioritize scheduling before this date</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred Days (Optional)</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox"> Mon
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox"> Tue
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox"> Wed
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox"> Thu
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox"> Fri
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox" checked> Sat
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;">
+                            <input type="checkbox" checked> Sun
+                        </label>
+                    </div>
+                    <div class="info-note">Weekends preferred by default</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px;">
+                    Create Task
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar for logging period -->
+    <div class="sidebar" id="periodSidebar">
+        <div class="sidebar-header">
+            <h3>Log Period</h3>
+            <button class="close-btn" onclick="toggleSidebar('period')">×</button>
+        </div>
+        <div class="sidebar-content">
+            <form>
+                <div class="form-group">
+                    <label>Period Start Date *</label>
+                    <input type="date" required value="2026-02-01">
+                    <div class="info-note">This resets your cycle to Day 1</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Period End Date (Optional)</label>
+                    <input type="date" value="2026-02-04">
+                    <div class="info-note">Helps us predict your cycle better</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px;">
+                    Log Period
+                </button>
+
+                <div style="margin-top: 24px; padding: 16px; background: #f9f9f9; border-radius: 8px;">
+                    <div style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">Your Cycle Stats</div>
+                    <div style="font-size: 13px; color: #666; line-height: 1.6;">
+                        Average cycle length: 28 days<br>
+                        Last period: Jan 5, 2026<br>
+                        Predicted next: Mar 1, 2026
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar(type) {
+            const taskSidebar = document.getElementById('taskSidebar');
+            const periodSidebar = document.getElementById('periodSidebar');
+            
+            if (type === 'task') {
+                taskSidebar.classList.toggle('open');
+                periodSidebar.classList.remove('open');
+            } else {
+                periodSidebar.classList.toggle('open');
+                taskSidebar.classList.remove('open');
+            }
+        }
+
+        // Close sidebar on overlay click
+        document.addEventListener('click', function(e) {
+            const taskSidebar = document.getElementById('taskSidebar');
+            const periodSidebar = document.getElementById('periodSidebar');
+            
+            if (!e.target.closest('.sidebar') && !e.target.closest('.btn')) {
+                taskSidebar.classList.remove('open');
+                periodSidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
