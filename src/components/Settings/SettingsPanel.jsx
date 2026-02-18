@@ -44,7 +44,7 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged }) {
     return (
         <>
             {isOpen && (
-                <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+                <div className="fixed inset-0 bg-black/20 z-40" onMouseDown={onClose} />
             )}
 
             <div className={`
@@ -127,7 +127,7 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged }) {
                                         value={opt.value}
                                         checked={preferences.reschedulingBehavior === opt.value}
                                         onChange={() => update('reschedulingBehavior', opt.value)}
-                                        className="mt-0.5 text-purple-600 focus:ring-purple-600"
+                                        className="mt-0.5 accent-purple-600 w-4 h-4"
                                     />
                                     <div>
                                         <p className="text-sm font-medium text-gray-800">{opt.label}</p>

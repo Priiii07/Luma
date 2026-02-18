@@ -135,6 +135,7 @@ function App() {
 
   const handleOnboardingComplete = async () => {
     await loadCycles()
+    await loadPreferences()
   }
 
   const handleTaskCreated = () => {
@@ -188,8 +189,8 @@ function App() {
   const visibleWarnings = warnings.filter(w => !dismissedWarnings.has(w.id))
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden my-5">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <div className="flex-1 bg-white flex flex-col">
         <Header
           currentPhase={currentPhaseInfo.phase || 'Unknown'}
           cycleDay={currentPhaseInfo.cycleDay || 0}
@@ -241,7 +242,9 @@ function App() {
           </div>
         )}
 
-        <Calendar key={cycles.length} currentDate={currentDate} cycles={cycles} tasks={tasks} onTaskClick={setSelectedTask} onTaskMoved={handleTaskMoved} />
+        <div className="flex-1 flex flex-col">
+          <Calendar key={cycles.length} currentDate={currentDate} cycles={cycles} tasks={tasks} onTaskClick={setSelectedTask} onTaskMoved={handleTaskMoved} />
+        </div>
       </div>
 
       {/* Sidebars */}
