@@ -1,14 +1,8 @@
 import { addDays, parseISO, startOfDay } from 'date-fns'
-import { getPhaseForDateAdvanced, calculateAverageCycleLength } from './cycleHelpers'
-import { getDayName, isPast, toISODate } from './dateHelpers'
-
-// Max tasks per phase per day
-const PHASE_CAPACITY = {
-    menstrual: 2,
-    follicular: 3,
-    ovulation: 5,
-    luteal: 3
-}
+import { getPhaseForDateAdvanced } from './cycleHelpers'
+import { isPast, toISODate } from './dateHelpers'
+import { scoreDate } from './taskScoringEngine'
+import { getCapacityForPhase } from './capacityHelpers'
 
 /**
  * Check if a date can be scheduled (not in the past; today is valid)
@@ -39,31 +33,13 @@ export function generateCandidateDates(startDate, endDate) {
 }
 
 /**
- * Maximum tasks allowed for a given phase
+ * Maximum tasks allowed for a given phase, respecting user preferences.
  * @param {string} phase
+ * @param {Object} [userPreferences={}]
  * @returns {number}
  */
-export function getCapacityForDate(date, phase) {
-    return PHASE_CAPACITY[phase] || 3
-}
-
-/**
- * Check whether a task's energy level is a good match for a cycle phase
- * Returns true when no energy preference is set (always compatible)
- * @param {string|null} taskEnergy - 'low' | 'medium' | 'high' | null
- * @param {string} phase - 'menstrual' | 'follicular' | 'ovulation' | 'luteal'
- * @returns {boolean}
- */
-export function isEnergyMatch(taskEnergy, phase) {
-    if (!taskEnergy) return true
-
-    const matches = {
-        high: ['ovulation'],
-        medium: ['follicular', 'luteal'],
-        low: ['luteal', 'menstrual']
-    }
-
-    return matches[taskEnergy]?.includes(phase) ?? true
+export function getCapacityForDate(phase, userPreferences = {}) {
+    return getCapacityForPhase(phase, userPreferences)
 }
 
 /**
@@ -71,13 +47,14 @@ export function isEnergyMatch(taskEnergy, phase) {
  * @param {Date} date
  * @param {Object[]} existingTasks - All tasks already in state
  * @param {string} phase
+ * @param {Object} [userPreferences={}]
  * @returns {boolean}
  */
-export function isDateAvailable(date, existingTasks, phase) {
+export function isDateAvailable(date, existingTasks, phase, userPreferences = {}) {
     if (!canScheduleOnDate(date)) return false
 
     const dateStr = toISODate(date)
-    const capacity = getCapacityForDate(date, phase)
+    const capacity = getCapacityForDate(phase, userPreferences)
     const tasksOnDate = existingTasks.filter(
         t => t.scheduledDate === dateStr && !t.completed
     ).length
@@ -86,76 +63,67 @@ export function isDateAvailable(date, existingTasks, phase) {
 }
 
 /**
- * Schedule a task — Phase 1 & 2 implementation.
+ * Schedule a task using intelligent scoring (Phase 3).
  *
- * Applies hard filters in order:
+ * Hard constraints (non-negotiable):
  *   1. Not in the past
- *   2. Preferred days (if specified)
- *   3. Strictly before deadline (if specified)
- *   4. Energy-phase match (if energy specified)
- *   5. Capacity check
+ *   2. Has capacity (phase task limit not exceeded)
+ *   3. Strictly before deadline (if set)
  *
- * Falls back via findBestFallbackDate when no perfect match exists.
+ * Soft scoring (weighted 0-100):
+ *   - Energy-phase match       40%
+ *   - Deadline urgency         30%
+ *   - Workload balance         20%
+ *   - Day preference           10%
+ *
+ * Falls back via findBestFallbackDate when no candidates survive hard constraints.
  *
  * @param {Object} task
  * @param {Object[]} existingTasks
  * @param {Object[]} cycles
+ * @param {Object} [userPreferences={}]
  * @returns {string} ISO date string (YYYY-MM-DD)
  */
-export function scheduleTask(task, existingTasks, cycles) {
+export function scheduleTask(task, existingTasks, cycles, userPreferences = {}) {
     const today = startOfDay(new Date())
-    const avgCycleLength = calculateAverageCycleLength(cycles)
 
     const maxDate = task.deadline
         ? startOfDay(parseISO(task.deadline))
         : addDays(today, 60)
 
     // Full candidate list (today through maxDate)
-    let filtered = generateCandidateDates(today, maxDate)
+    let candidates = generateCandidateDates(today, maxDate)
 
-    // 1. Remove past dates
-    filtered = filtered.filter(canScheduleOnDate)
+    // Hard constraint 1: Not in the past
+    candidates = candidates.filter(canScheduleOnDate)
 
-    // 2. Preferred days (Phase 1)
-    if (task.preferredDays && task.preferredDays.length > 0) {
-        filtered = filtered.filter(d => task.preferredDays.includes(getDayName(d)))
-    }
-
-    // 3. Strictly before deadline — not on the deadline day itself (Phase 1)
+    // Hard constraint 2: Strictly before deadline (not on deadline day)
     if (task.deadline) {
         const deadlineDate = startOfDay(parseISO(task.deadline))
-        filtered = filtered.filter(d => startOfDay(d) < deadlineDate)
+        candidates = candidates.filter(d => startOfDay(d) < deadlineDate)
     }
 
-    // 4. Energy-phase match (Phase 2)
-    if (task.energyLevel) {
-        filtered = filtered.filter(d => {
-            const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-            return isEnergyMatch(task.energyLevel, phase)
-        })
-    }
-
-    // 5. Capacity check
-    filtered = filtered.filter(d => {
-        const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-        return isDateAvailable(d, existingTasks, phase)
+    // Hard constraint 3: Has capacity
+    candidates = candidates.filter(d => {
+        const phase = getPhaseForDateAdvanced(d, cycles) || 'luteal'
+        return isDateAvailable(d, existingTasks, phase, userPreferences)
     })
 
-    if (filtered.length > 0) {
-        return toISODate(filtered[0])
+    if (candidates.length > 0) {
+        // Score all candidates and pick the best
+        const scored = candidates.map(d =>
+            scoreDate(d, task, existingTasks, cycles, userPreferences)
+        )
+        scored.sort((a, b) => b.totalScore - a.totalScore)
+        return toISODate(scored[0].date)
     }
 
-    // No perfect match — relax constraints one by one
-    return findBestFallbackDate(task, existingTasks, cycles, today, maxDate, avgCycleLength)
+    // No candidates survived hard constraints — relax capacity as last resort
+    return findBestFallbackDate(task, existingTasks, cycles, today, maxDate, userPreferences)
 }
 
 /**
- * Fallback scheduler — relaxes constraints in priority order:
- *   1. Drop energy, keep preferred days + deadline
- *   2. Drop preferred days, keep energy + deadline
- *   3. Any available date before deadline
- *   4. Tomorrow (last resort, ignores capacity)
- *
+ * Fallback scheduler — relaxes capacity constraint and scores remaining options.
  * Deadline is always treated as a hard constraint.
  *
  * @param {Object} task
@@ -163,49 +131,96 @@ export function scheduleTask(task, existingTasks, cycles) {
  * @param {Object[]} cycles
  * @param {Date} startDate
  * @param {Date} endDate
- * @param {number} avgCycleLength
+ * @param {Object} userPreferences
  * @returns {string} ISO date string
  */
-function findBestFallbackDate(task, existingTasks, cycles, startDate, endDate, avgCycleLength) {
-    const allCandidates = generateCandidateDates(startDate, endDate).filter(canScheduleOnDate)
+function findBestFallbackDate(task, existingTasks, cycles, startDate, endDate, userPreferences) {
+    // All future dates up to the deadline (capacity ignored)
+    let candidates = generateCandidateDates(startDate, endDate).filter(canScheduleOnDate)
 
-    // Keep deadline as a hard constraint
-    const beforeDeadline = task.deadline
-        ? allCandidates.filter(d => startOfDay(d) < startOfDay(parseISO(task.deadline)))
-        : allCandidates
+    // Deadline remains a hard constraint even in fallback
+    if (task.deadline) {
+        const deadlineDate = startOfDay(parseISO(task.deadline))
+        candidates = candidates.filter(d => startOfDay(d) < deadlineDate)
+    }
 
-    // Try 1: relax energy, keep preferred days
-    if (task.preferredDays && task.preferredDays.length > 0) {
-        const withPreferred = beforeDeadline.filter(d =>
-            task.preferredDays.includes(getDayName(d))
+    if (candidates.length > 0) {
+        const scored = candidates.map(d =>
+            scoreDate(d, task, existingTasks, cycles, userPreferences)
         )
-        const found = withPreferred.find(d => {
-            const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-            return isDateAvailable(d, existingTasks, phase)
-        })
-        if (found) return toISODate(found)
+        scored.sort((a, b) => b.totalScore - a.totalScore)
+        return toISODate(scored[0].date)
     }
 
-    // Try 2: relax preferred days, keep energy
-    if (task.energyLevel) {
-        const withEnergy = beforeDeadline.filter(d => {
-            const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-            return isEnergyMatch(task.energyLevel, phase)
-        })
-        const found = withEnergy.find(d => {
-            const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-            return isDateAvailable(d, existingTasks, phase)
-        })
-        if (found) return toISODate(found)
-    }
-
-    // Try 3: any available date before deadline (all constraints relaxed)
-    const found = beforeDeadline.find(d => {
-        const phase = getPhaseForDateAdvanced(d, cycles, avgCycleLength) || 'luteal'
-        return isDateAvailable(d, existingTasks, phase)
-    })
-    if (found) return toISODate(found)
-
-    // Last resort: tomorrow regardless of capacity
+    // Absolute last resort: tomorrow regardless of everything
     return toISODate(addDays(startOfDay(new Date()), 1))
+}
+
+/**
+ * Like scheduleTask, but returns rich scheduling info for the overload warning.
+ *
+ * @param {Object} task
+ * @param {Object[]} existingTasks
+ * @param {Object[]} cycles
+ * @param {Object} [userPreferences={}]
+ * @returns {{
+ *   scheduledDate: string,
+ *   isAtCapacity: boolean,
+ *   tasksOnDate: number,
+ *   capacity: number,
+ *   phase: string,
+ *   alternatives: Array<{ date: string, phase: string, tasksOnDate: number, capacity: number, score: number }>
+ * }}
+ */
+export function scheduleTaskWithAlternatives(task, existingTasks, cycles, userPreferences = {}) {
+    const today = startOfDay(new Date())
+    const maxDate = task.deadline
+        ? startOfDay(parseISO(task.deadline))
+        : addDays(today, 60)
+
+    let candidates = generateCandidateDates(today, maxDate).filter(canScheduleOnDate)
+
+    if (task.deadline) {
+        const deadlineDate = startOfDay(parseISO(task.deadline))
+        candidates = candidates.filter(d => startOfDay(d) < deadlineDate)
+    }
+
+    // Score ALL candidates (including over-capacity ones) so we can show alternatives
+    const allScored = candidates.map(d => {
+        const phase = getPhaseForDateAdvanced(d, cycles) || 'luteal'
+        const capacity = getCapacityForPhase(phase, userPreferences)
+        const tasksOnDate = existingTasks.filter(
+            t => t.scheduledDate === toISODate(d) && !t.completed
+        ).length
+        const scored = scoreDate(d, task, existingTasks, cycles, userPreferences)
+        return { ...scored, phase, tasksOnDate, capacity, dateStr: toISODate(d) }
+    })
+
+    // Prefer within-capacity candidates for the best pick
+    const withinCapacity = allScored.filter(s => s.tasksOnDate < s.capacity)
+    const pool = withinCapacity.length > 0 ? withinCapacity : allScored
+    pool.sort((a, b) => b.totalScore - a.totalScore)
+
+    const best = pool[0]
+    if (!best) {
+        const fallback = toISODate(addDays(today, 1))
+        return { scheduledDate: fallback, isAtCapacity: false, tasksOnDate: 0, capacity: 3, phase: 'luteal', alternatives: [] }
+    }
+
+    const isAtCapacity = best.tasksOnDate >= best.capacity
+
+    // Up to 3 alternatives: different dates, within capacity, sorted by score
+    const alternatives = withinCapacity
+        .filter(s => s.dateStr !== best.dateStr)
+        .slice(0, 3)
+        .map(s => ({ date: s.dateStr, phase: s.phase, tasksOnDate: s.tasksOnDate, capacity: s.capacity, score: Math.round(s.totalScore) }))
+
+    return {
+        scheduledDate: best.dateStr,
+        isAtCapacity,
+        tasksOnDate: best.tasksOnDate,
+        capacity: best.capacity,
+        phase: best.phase,
+        alternatives
+    }
 }
