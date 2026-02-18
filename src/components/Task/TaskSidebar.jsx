@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { createTask, updateTask } from '../../utils/storageHelpers'
-import { scheduleTask } from '../../utils/taskScheduler'
+import { scheduleTaskWithAlternatives } from '../../utils/taskScheduler'
+import OverloadWarningModal from './OverloadWarningModal'
 
-function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }) {
+function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], userPreferences = {} }) {
     const [taskName, setTaskName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
     const [deadline, setDeadline] = useState('')
     const [preferredDays, setPreferredDays] = useState(['Sat', 'Sun'])
     const [loading, setLoading] = useState(false)
+
+    // Overload warning state
+    const [pendingTask, setPendingTask] = useState(null)       // task object awaiting save
+    const [scheduleInfo, setScheduleInfo] = useState(null)     // result from scheduleTaskWithAlternatives
+    const [showWarning, setShowWarning] = useState(false)
 
     const handleDayToggle = (day) => {
         setPreferredDays(prev =>
@@ -20,38 +26,71 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }
         setLoading(true)
 
         try {
-            // Create task object
             const task = {
                 name: taskName,
                 energyLevel: energyLevel || null,
                 deadline: deadline || null,
-                preferredDays: preferredDays.length > 0 ? preferredDays : null
+                preferredDays: preferredDays.length > 0 ? preferredDays : null,
+                autoScheduled: true
             }
 
-            // Save to IndexedDB
-            const taskId = await createTask(task)
+            // Get scheduling info including overload check
+            const info = scheduleTaskWithAlternatives(task, tasks, cycles, userPreferences)
 
-            // Compute scheduled date — works with or without cycle data
-            const scheduledDate = scheduleTask(task, tasks, cycles)
-            await updateTask(taskId, { scheduledDate })
-
-            // Notify parent to refresh tasks
-            if (onTaskCreated) {
-                onTaskCreated()
+            if (info.isAtCapacity) {
+                // Pause and show the warning modal
+                setPendingTask(task)
+                setScheduleInfo(info)
+                setShowWarning(true)
+                setLoading(false)
+                return
             }
 
-            // Reset form
-            setTaskName('')
-            setEnergyLevel('')
-            setDeadline('')
-            setPreferredDays(['Sat', 'Sun'])
-
-            onClose()
+            // No overload — save directly
+            await saveTask(task, info.scheduledDate)
         } catch (error) {
             console.error('Error creating task:', error)
         } finally {
             setLoading(false)
         }
+    }
+
+    // Called when user picks "Add Anyway" or selects an alternative
+    const handleConfirmSave = async (dateOverride) => {
+        setShowWarning(false)
+        setLoading(true)
+        try {
+            const date = dateOverride ?? scheduleInfo.scheduledDate
+            await saveTask(pendingTask, date)
+        } catch (error) {
+            console.error('Error saving task after warning:', error)
+        } finally {
+            setPendingTask(null)
+            setScheduleInfo(null)
+            setLoading(false)
+        }
+    }
+
+    const handleCancelWarning = () => {
+        setShowWarning(false)
+        setPendingTask(null)
+        setScheduleInfo(null)
+    }
+
+    async function saveTask(task, scheduledDate) {
+        const taskId = await createTask(task)
+        await updateTask(taskId, { scheduledDate })
+        if (onTaskCreated) onTaskCreated()
+        resetForm()
+        onClose()
+    }
+
+    function resetForm() {
+        setTaskName('')
+        setEnergyLevel('')
+        setDeadline('')
+        setPreferredDays(['Sat', 'Sun'])
+        setLoading(false)
     }
 
     return (
@@ -60,7 +99,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-black/20 z-40"
-                    onClick={onClose}
+                    onMouseDown={onClose}
                 ></div>
             )}
 
@@ -157,7 +196,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white 
+                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white
                        rounded-lg text-sm font-medium transition-colors mt-6 disabled:opacity-50"
                         >
                             {loading ? 'Creating...' : 'Create Task'}
@@ -165,9 +204,23 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [] }
                     </form>
                 </div>
             </div>
+
+            {/* Overload warning modal — rendered outside sidebar so it appears above z-50 */}
+            {scheduleInfo && (
+                <OverloadWarningModal
+                    isOpen={showWarning}
+                    scheduledDate={scheduleInfo.scheduledDate}
+                    tasksOnDate={scheduleInfo.tasksOnDate}
+                    capacity={scheduleInfo.capacity}
+                    phase={scheduleInfo.phase}
+                    alternatives={scheduleInfo.alternatives}
+                    onAddAnyway={() => handleConfirmSave(null)}
+                    onUseAlternative={(date) => handleConfirmSave(date)}
+                    onCancel={handleCancelWarning}
+                />
+            )}
         </>
     )
 }
 
 export default TaskSidebar
-

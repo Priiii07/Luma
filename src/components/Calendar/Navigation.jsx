@@ -1,4 +1,4 @@
-function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPeriod, isOnboarded = true, cyclesLogged = 0 }) {
+function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPeriod, onOpenSettings, isOnboarded = true, cyclesLogged = 0 }) {
     return (
         <div className="flex justify-between items-center px-6 py-5 border-b border-gray-200">
             <div className="flex items-center gap-4">
@@ -19,6 +19,16 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                 </button>
             </div>
             <div className="flex gap-3 items-center">
+                {/* Settings gear */}
+                <button
+                    onClick={onOpenSettings}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Settings"
+                    aria-label="Open settings"
+                >
+                    ⚙️
+                </button>
+
                 <button
                     onClick={onLogPeriod}
                     className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors"

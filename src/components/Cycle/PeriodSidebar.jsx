@@ -76,7 +76,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-black/20 z-40"
-                    onClick={onClose}
+                    onMouseDown={onClose}
                 ></div>
             )}
 

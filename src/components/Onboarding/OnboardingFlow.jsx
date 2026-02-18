@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { logCycle, updateAllCycleLengths } from '../../utils/storageHelpers'
+import { loadUserPreferences, saveUserPreferences } from '../../store/userPreferences'
 
-const STEPS = ['welcome', 'first_period', 'second_period', 'complete']
+const STEPS = ['welcome', 'first_period', 'second_period', 'daily_limit', 'complete']
 
 /**
  * Full-screen onboarding overlay shown until 2 cycles are logged.
@@ -20,6 +21,7 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
     const [firstPeriodStart, setFirstPeriodStart] = useState(null) // remember for hint text
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
+    const [dailyLimit, setDailyLimit] = useState(4)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -58,7 +60,20 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
             return
         }
 
-        await saveAndAdvance('complete')
+        await saveAndAdvance('daily_limit')
+    }
+
+    async function handleDailyLimitSave() {
+        setLoading(true)
+        try {
+            const prefs = await loadUserPreferences()
+            await saveUserPreferences({ ...prefs, dailyTaskLimit: dailyLimit })
+            setStep('complete')
+        } catch {
+            setError('Could not save your preference. Please try again.')
+        } finally {
+            setLoading(false)
+        }
     }
 
     // Shared period log form used in both period steps
@@ -177,6 +192,57 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                             </p>
                         </div>
                         <PeriodForm onSubmit={handleSecondPeriod} />
+                    </div>
+                )}
+
+                {/* Step: Daily limit */}
+                {step === 'daily_limit' && (
+                    <div>
+                        <div className="mb-6">
+                            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Almost done</p>
+                            <h2 className="text-xl font-semibold text-gray-900 mb-2">How many tasks can you handle per day?</h2>
+                            <p className="text-sm text-gray-500">
+                                We'll use this to avoid overloading your schedule. You can always change it later in Settings.
+                            </p>
+                        </div>
+
+                        {error && (
+                            <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg mb-4">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-5 gap-2 mb-6">
+                            {[2, 3, 4, 5, 6].map(n => (
+                                <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => setDailyLimit(n)}
+                                    className={`flex flex-col items-center py-3 rounded-xl border-2 transition-all ${
+                                        dailyLimit === n
+                                            ? 'border-purple-600 bg-purple-50 text-purple-700'
+                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <span className="text-lg font-bold">{n}</span>
+                                    <span className="text-[10px] mt-0.5">
+                                        {n === 2 ? 'Light' : n === 3 ? 'Easy' : n === 4 ? 'Moderate' : n === 5 ? 'Busy' : 'Heavy'}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <p className="text-xs text-gray-400 text-center mb-6">
+                            This is your peak-day limit. Rest phases will automatically scale down.
+                        </p>
+
+                        <button
+                            onClick={handleDailyLimitSave}
+                            disabled={loading}
+                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                            {loading ? 'Saving...' : 'Save & Continue →'}
+                        </button>
                     </div>
                 )}
 
