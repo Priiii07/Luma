@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { saveUserPreferences } from '../../store/userPreferences'
+import { exportData, importData, clearAllData } from '../../utils/storageHelpers'
 
 /**
  * Slide-in settings sidebar.
@@ -8,9 +10,64 @@ import { saveUserPreferences } from '../../store/userPreferences'
  *   onClose              – () => void
  *   preferences          – current preferences object
  *   onPreferencesChanged – (updated: Object) => void
+ *   onDataCleared        – () => void   (callback after clearing all data)
+ *   onDataImported       – () => void   (callback after importing data)
  */
-function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged }) {
+function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onDataCleared, onDataImported }) {
+    const [clearStep, setClearStep] = useState(0) // 0=idle, 1=first confirm, 2=clearing
+    const [importStatus, setImportStatus] = useState(null) // null | 'success' | 'error'
+
     if (!preferences) return null
+
+    async function handleExport() {
+        try {
+            const data = await exportData()
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `cycle-planner-backup-${new Date().toISOString().slice(0, 10)}.json`
+            a.click()
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('Export failed:', err)
+        }
+    }
+
+    function handleImport() {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = '.json'
+        input.onchange = async (e) => {
+            const file = e.target.files[0]
+            if (!file) return
+            try {
+                const text = await file.text()
+                const data = JSON.parse(text)
+                await clearAllData()
+                await importData(data)
+                setImportStatus('success')
+                if (onDataImported) onDataImported()
+                setTimeout(() => setImportStatus(null), 3000)
+            } catch (err) {
+                console.error('Import failed:', err)
+                setImportStatus('error')
+                setTimeout(() => setImportStatus(null), 3000)
+            }
+        }
+        input.click()
+    }
+
+    async function handleClearAll() {
+        if (clearStep === 0) {
+            setClearStep(1)
+            return
+        }
+        setClearStep(2)
+        await clearAllData()
+        setClearStep(0)
+        if (onDataCleared) onDataCleared()
+    }
 
     async function update(dotPath, value) {
         const keys = dotPath.split('.')
@@ -169,6 +226,78 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged }) {
                                 )
                             })}
                         </div>
+                    </div>
+
+                    {/* ── Data Backup ── */}
+                    <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                            Data Backup
+                        </h4>
+                        <p className="text-xs text-gray-400 mb-3">
+                            Export your data as a JSON file or restore from a previous backup.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleExport}
+                                className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors"
+                            >
+                                Export Backup
+                            </button>
+                            <button
+                                onClick={handleImport}
+                                className="flex-1 px-4 py-2.5 border border-purple-300 text-purple-700 hover:bg-purple-50 text-sm font-medium rounded-xl transition-colors"
+                            >
+                                Import Backup
+                            </button>
+                        </div>
+                        {importStatus === 'success' && (
+                            <p className="text-xs text-green-600 mt-2">Data restored successfully!</p>
+                        )}
+                        {importStatus === 'error' && (
+                            <p className="text-xs text-red-600 mt-2">Import failed. Please check the file format.</p>
+                        )}
+                    </div>
+
+                    {/* ── Clear All Data ── */}
+                    <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                            Danger Zone
+                        </h4>
+                        <p className="text-xs text-gray-400 mb-3">
+                            Permanently delete all your data. This cannot be undone.
+                        </p>
+                        {clearStep === 0 && (
+                            <button
+                                onClick={handleClearAll}
+                                className="w-full px-4 py-2.5 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium rounded-xl transition-colors"
+                            >
+                                Clear All Data
+                            </button>
+                        )}
+                        {clearStep === 1 && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                                <p className="text-sm text-red-700 font-medium mb-2">
+                                    Are you sure? All tasks, cycles, and settings will be deleted.
+                                </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleClearAll}
+                                        className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        Yes, Delete Everything
+                                    </button>
+                                    <button
+                                        onClick={() => setClearStep(0)}
+                                        className="flex-1 px-3 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {clearStep === 2 && (
+                            <p className="text-sm text-gray-500">Clearing data...</p>
+                        )}
                     </div>
                 </div>
             </div>
