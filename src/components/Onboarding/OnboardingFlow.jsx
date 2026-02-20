@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
+import DatePicker from 'react-datepicker'
 import { logCycle, updateAllCycleLengths } from '../../utils/storageHelpers'
 import { loadUserPreferences, saveUserPreferences } from '../../store/userPreferences'
 
@@ -19,24 +20,28 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
 
     const [step, setStep] = useState(initialStep)
     const [firstPeriodStart, setFirstPeriodStart] = useState(null) // remember for hint text
-    const [startDate, setStartDate] = useState('')
-    const [endDate, setEndDate] = useState('')
+    const [startDate, setStartDate] = useState(null)
+    const [endDate, setEndDate] = useState(null)
     const [dailyLimit, setDailyLimit] = useState(4)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const today = format(new Date(), 'yyyy-MM-dd')
+    const today = new Date()
     const stepIndex = STEPS.indexOf(step)
+
+    // Convert Date objects to 'yyyy-MM-dd' strings for storage
+    const startDateStr = startDate ? format(startDate, 'yyyy-MM-dd') : ''
+    const endDateStr = endDate ? format(endDate, 'yyyy-MM-dd') : null
 
     async function saveAndAdvance(nextStep) {
         setLoading(true)
         setError('')
         try {
-            await logCycle({ startDate, endDate: endDate || null })
+            await logCycle({ startDate: startDateStr, endDate: endDateStr })
             await updateAllCycleLengths()
-            if (step === 'first_period') setFirstPeriodStart(startDate)
-            setStartDate('')
-            setEndDate('')
+            if (step === 'first_period') setFirstPeriodStart(startDateStr)
+            setStartDate(null)
+            setEndDate(null)
             setStep(nextStep)
         } catch {
             setError('Something went wrong saving your period. Please try again.')
@@ -55,7 +60,7 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
 
         // Second period must be earlier than the first
         const referenceDate = firstPeriodStart || (cyclesLogged === 1 ? null : null)
-        if (referenceDate && new Date(startDate) >= new Date(referenceDate)) {
+        if (referenceDate && startDate >= new Date(referenceDate)) {
             setError(`This period should be from an earlier month than the one you already logged (${format(parseISO(referenceDate), 'MMMM')}).`)
             return
         }
@@ -90,14 +95,15 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Period Start Date <span className="text-red-500">*</span>
                     </label>
-                    <input
-                        type="date"
-                        required
-                        value={startDate}
-                        max={today}
-                        onChange={e => { setStartDate(e.target.value); setError('') }}
+                    <DatePicker
+                        selected={startDate}
+                        onChange={(date) => { setStartDate(date); setError('') }}
+                        dateFormat="MMM d, yyyy"
+                        maxDate={today}
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                        placeholderText="Select start date"
+                        required
                     />
                 </div>
 
@@ -105,21 +111,23 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Period End Date <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
-                    <input
-                        type="date"
-                        value={endDate}
-                        min={startDate}
-                        max={today}
-                        onChange={e => setEndDate(e.target.value)}
+                    <DatePicker
+                        selected={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        dateFormat="MMM d, yyyy"
+                        minDate={startDate}
+                        maxDate={today}
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                        placeholderText="Select end date"
+                        isClearable
                     />
                     <p className="text-xs text-gray-500 mt-1">Helps us calculate your cycle length accurately</p>
                 </div>
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !startDate}
                     className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white
                                rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
+import DatePicker from 'react-datepicker'
 import { logCycle, updateAllCycleLengths, getCycleStats, db } from '../../utils/storageHelpers'
 
 function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
-    const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-    const [endDate, setEndDate] = useState('')
+    const [startDate, setStartDate] = useState(new Date())
+    const [endDate, setEndDate] = useState(null)
     const [cycleStats, setCycleStats] = useState(null)
     const [loading, setLoading] = useState(false)
     // Holds the existing cycle if user tries to log a duplicate month
@@ -26,15 +27,19 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
         }
     }
 
+    // Convert Date objects to 'yyyy-MM-dd' strings for storage
+    const startDateStr = startDate ? format(startDate, 'yyyy-MM-dd') : ''
+    const endDateStr = endDate ? format(endDate, 'yyyy-MM-dd') : null
+
     // Core save logic — called both on first submit (no duplicate) and after user confirms replace
     const saveCycle = async () => {
         setLoading(true)
         try {
-            await logCycle({ startDate, endDate: endDate || null })
+            await logCycle({ startDate: startDateStr, endDate: endDateStr })
             await updateAllCycleLengths()
             if (onCycleLogged) await onCycleLogged()
-            setStartDate(format(new Date(), 'yyyy-MM-dd'))
-            setEndDate('')
+            setStartDate(new Date())
+            setEndDate(null)
             setDuplicateWarning(null)
             await loadStats()
             onClose()
@@ -49,7 +54,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
         e.preventDefault()
 
         // Check for a same-month entry (non-overlapping duplicates slip past the DB overlap check)
-        const newMonth = startDate.substring(0, 7) // 'YYYY-MM'
+        const newMonth = startDateStr.substring(0, 7) // 'YYYY-MM'
         const existing = cycles.find(c => c.startDate.substring(0, 7) === newMonth)
 
         if (existing) {
@@ -133,13 +138,15 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Period Start Date *
                             </label>
-                            <input
-                                type="date"
-                                required
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                            <DatePicker
+                                selected={startDate}
+                                onChange={(date) => setStartDate(date)}
+                                dateFormat="MMM d, yyyy"
+                                maxDate={new Date()}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                         focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                placeholderText="Select start date"
+                                required
                             />
                             <div className="text-xs text-gray-500 mt-1">
                                 This resets your cycle to Day 1
@@ -150,12 +157,16 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Period End Date (Optional)
                             </label>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
+                            <DatePicker
+                                selected={endDate}
+                                onChange={(date) => setEndDate(date)}
+                                dateFormat="MMM d, yyyy"
+                                minDate={startDate}
+                                maxDate={new Date()}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                         focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                placeholderText="Select end date"
+                                isClearable
                             />
                             <div className="text-xs text-gray-500 mt-1">
                                 Helps us predict your cycle better
