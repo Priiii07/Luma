@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { format } from 'date-fns'
+import DatePicker from 'react-datepicker'
 import { createTask, updateTask } from '../../utils/storageHelpers'
 import { scheduleTaskWithAlternatives } from '../../utils/taskScheduler'
 import OverloadWarningModal from './OverloadWarningModal'
@@ -6,7 +8,7 @@ import OverloadWarningModal from './OverloadWarningModal'
 function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], userPreferences = {} }) {
     const [taskName, setTaskName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
-    const [deadline, setDeadline] = useState('')
+    const [deadline, setDeadline] = useState(null)
     const [preferredDays, setPreferredDays] = useState(['Sat', 'Sun'])
     const [loading, setLoading] = useState(false)
 
@@ -29,7 +31,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
             const task = {
                 name: taskName,
                 energyLevel: energyLevel || null,
-                deadline: deadline || null,
+                deadline: deadline ? format(deadline, 'yyyy-MM-dd') : null,
                 preferredDays: preferredDays.length > 0 ? preferredDays : null,
                 autoScheduled: true
             }
@@ -88,7 +90,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
     function resetForm() {
         setTaskName('')
         setEnergyLevel('')
-        setDeadline('')
+        setDeadline(null)
         setPreferredDays(['Sat', 'Sun'])
         setLoading(false)
     }
@@ -159,12 +161,15 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Deadline (Optional)
                             </label>
-                            <input
-                                type="date"
-                                value={deadline}
-                                onChange={(e) => setDeadline(e.target.value)}
+                            <DatePicker
+                                selected={deadline}
+                                onChange={(date) => setDeadline(date)}
+                                dateFormat="MMM d, yyyy"
+                                minDate={new Date()}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                         focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                placeholderText="Select deadline"
+                                isClearable
                             />
                             <div className="text-xs text-gray-500 mt-1">
                                 We'll prioritize scheduling before this date

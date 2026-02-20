@@ -29,6 +29,39 @@ button {
   cursor: pointer;
 }
 
+/* Style react-datepicker to match app theme */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+.react-datepicker__input-container input {
+  width: 100%;
+}
+.react-datepicker__header {
+  background-color: #f3e8ff !important;
+  border-bottom-color: #e9d5ff !important;
+}
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: #6b21a8 !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #9333ea !important;
+  color: white !important;
+}
+.react-datepicker__day:hover {
+  background-color: #f3e8ff !important;
+}
+.react-datepicker__navigation-icon::before {
+  border-color: #9333ea;
+}
+.react-datepicker-popper {
+  z-index: 60 !important;
+}
+.react-datepicker__close-icon::after {
+  background-color: #9333ea;
+}
+
 /* Ensure native radio/checkbox inputs keep their browser appearance */
 input[type="radio"],
 input[type="checkbox"] {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
+import DatePicker from 'react-datepicker'
 import { updateTask, deleteTask, completeTask, getTaskHistory } from '../../utils/storageHelpers'
 
 const ENERGY_LABELS = { high: 'High Energy', medium: 'Medium Energy', low: 'Low Energy' }
@@ -30,8 +31,8 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
     // Editable fields
     const [name, setName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
-    const [deadline, setDeadline] = useState('')
-    const [scheduledDate, setScheduledDate] = useState('')
+    const [deadline, setDeadline] = useState(null)
+    const [scheduledDate, setScheduledDate] = useState(null)
     const [preferredDays, setPreferredDays] = useState([])
 
     useEffect(() => {
@@ -39,8 +40,8 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
         // Reset edit fields whenever a new task is opened
         setName(task.name || '')
         setEnergyLevel(task.energyLevel || '')
-        setDeadline(task.deadline || '')
-        setScheduledDate(task.scheduledDate || '')
+        setDeadline(task.deadline ? parseISO(task.deadline) : null)
+        setScheduledDate(task.scheduledDate ? parseISO(task.scheduledDate) : null)
         setPreferredDays(task.preferredDays || [])
         setEditing(false)
         setConfirmDelete(false)
@@ -68,8 +69,8 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
             await updateTask(task.id, {
                 name,
                 energyLevel: energyLevel || null,
-                deadline: deadline || null,
-                scheduledDate: scheduledDate || null,
+                deadline: deadline ? format(deadline, 'yyyy-MM-dd') : null,
+                scheduledDate: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
                 preferredDays: preferredDays.length > 0 ? preferredDays : null
             })
             if (onSaved) await onSaved()
@@ -146,11 +147,13 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Scheduled Date</label>
                             {editing ? (
-                                <input
-                                    type="date"
-                                    value={scheduledDate}
-                                    onChange={e => setScheduledDate(e.target.value)}
+                                <DatePicker
+                                    selected={scheduledDate}
+                                    onChange={(date) => setScheduledDate(date)}
+                                    dateFormat="MMM d, yyyy"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-600"
+                                    placeholderText="Select date"
+                                    isClearable
                                 />
                             ) : (
                                 <p className="text-sm text-gray-800">
@@ -184,11 +187,13 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Deadline</label>
                             {editing ? (
-                                <input
-                                    type="date"
-                                    value={deadline}
-                                    onChange={e => setDeadline(e.target.value)}
+                                <DatePicker
+                                    selected={deadline}
+                                    onChange={(date) => setDeadline(date)}
+                                    dateFormat="MMM d, yyyy"
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-600"
+                                    placeholderText="Select deadline"
+                                    isClearable
                                 />
                             ) : (
                                 <p className="text-sm text-gray-800">
