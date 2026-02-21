@@ -13,22 +13,12 @@ const ACTION_LABELS = {
     split: 'Split'
 }
 
-/**
- * Modal for viewing and editing a task's details.
- *
- * Props:
- *   task         – task object (null = modal closed)
- *   onClose      – () => void
- *   onSaved      – () => void  (reload tasks)
- *   onDeleted    – () => void  (reload tasks)
- */
 function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
     const [editing, setEditing] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [loading, setLoading] = useState(false)
     const [history, setHistory] = useState([])
 
-    // Editable fields
     const [name, setName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
     const [deadline, setDeadline] = useState(null)
@@ -37,7 +27,6 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
 
     useEffect(() => {
         if (!task) return
-        // Reset edit fields whenever a new task is opened
         setName(task.name || '')
         setEnergyLevel(task.energyLevel || '')
         setDeadline(task.deadline ? parseISO(task.deadline) : null)
@@ -51,7 +40,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
     async function loadHistory(taskId) {
         try {
             const entries = await getTaskHistory(taskId)
-            setHistory(entries.reverse()) // newest first
+            setHistory(entries.reverse())
         } catch {
             setHistory([])
         }
@@ -114,30 +103,33 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/30 z-50" onClick={onClose} />
+            <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col pointer-events-auto">
+                <div className="rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col pointer-events-auto"
+                     style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                     {/* Header */}
-                    <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between shrink-0">
+                    <div className="px-6 py-5 flex items-start justify-between shrink-0"
+                         style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         <div className="flex-1 min-w-0 pr-4">
                             {editing ? (
                                 <input
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    className="w-full text-base font-semibold text-gray-900 border-b border-purple-400 focus:outline-none pb-0.5"
+                                    className="w-full text-base font-semibold pb-0.5 focus:outline-none"
+                                    style={{ color: 'var(--text-primary)', background: 'transparent', borderBottom: '1px solid var(--purple-primary)' }}
                                     autoFocus
                                 />
                             ) : (
-                                <h3 className="text-base font-semibold text-gray-900 truncate">{task.name}</h3>
+                                <h3 className="text-base font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{task.name}</h3>
                             )}
                             {task.completed && (
-                                <span className="text-xs text-green-600 font-medium">Completed</span>
+                                <span className="text-xs font-medium" style={{ color: '#4ade80' }}>Completed</span>
                             )}
                         </div>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none shrink-0">×</button>
+                        <button onClick={onClose} className="text-2xl leading-none shrink-0" style={{ color: 'var(--text-tertiary)' }}>×</button>
                     </div>
 
                     {/* Body */}
@@ -145,18 +137,18 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
 
                         {/* Scheduled Date */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Scheduled Date</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--purple-primary)' }}>Scheduled Date</label>
                             {editing ? (
                                 <DatePicker
                                     selected={scheduledDate}
                                     onChange={(date) => setScheduledDate(date)}
                                     dateFormat="MMM d, yyyy"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-600"
+                                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
                                     placeholderText="Select date"
                                     isClearable
                                 />
                             ) : (
-                                <p className="text-sm text-gray-800">
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                                     {task.scheduledDate ? format(parseISO(task.scheduledDate), 'EEEE, MMMM d, yyyy') : '—'}
                                 </p>
                             )}
@@ -164,12 +156,13 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
 
                         {/* Energy Level */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Energy Type</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--purple-primary)' }}>Energy Type</label>
                             {editing ? (
                                 <select
                                     value={energyLevel}
                                     onChange={e => setEnergyLevel(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-600"
+                                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}
                                 >
                                     <option value="">Not set</option>
                                     <option value="low">Low Energy</option>
@@ -177,7 +170,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                     <option value="high">High Energy</option>
                                 </select>
                             ) : (
-                                <p className="text-sm text-gray-800">
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                                     {task.energyLevel ? ENERGY_LABELS[task.energyLevel] : '—'}
                                 </p>
                             )}
@@ -185,18 +178,18 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
 
                         {/* Deadline */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Deadline</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--purple-primary)' }}>Deadline</label>
                             {editing ? (
                                 <DatePicker
                                     selected={deadline}
                                     onChange={(date) => setDeadline(date)}
                                     dateFormat="MMM d, yyyy"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-600"
+                                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
                                     placeholderText="Select deadline"
                                     isClearable
                                 />
                             ) : (
-                                <p className="text-sm text-gray-800">
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                                     {task.deadline ? format(parseISO(task.deadline), 'MMMM d, yyyy') : 'None'}
                                 </p>
                             )}
@@ -204,23 +197,24 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
 
                         {/* Preferred Days */}
                         <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Preferred Days</label>
+                            <label className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--purple-primary)' }}>Preferred Days</label>
                             {editing ? (
                                 <div className="flex gap-2 flex-wrap">
                                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                        <label key={day} className="flex items-center gap-1 text-sm font-normal">
+                                        <label key={day} className="flex items-center gap-1 text-sm font-normal"
+                                               style={{ color: 'var(--text-secondary)' }}>
                                             <input
                                                 type="checkbox"
                                                 checked={preferredDays.includes(day)}
                                                 onChange={() => toggleDay(day)}
-                                                className="rounded border-gray-300 text-purple-600 focus:ring-purple-600"
+                                                className="rounded"
                                             />
                                             {day}
                                         </label>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-800">
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                                     {task.preferredDays?.length > 0 ? task.preferredDays.join(', ') : 'Any day'}
                                 </p>
                             )}
@@ -229,19 +223,19 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                         {/* History */}
                         {history.length > 0 && (
                             <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">History</label>
+                                <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--purple-primary)' }}>History</label>
                                 <div className="space-y-1.5">
                                     {history.map((entry, i) => (
-                                        <div key={i} className="flex items-start gap-2 text-xs text-gray-500">
-                                            <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5" />
+                                        <div key={i} className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                            <span className="shrink-0 w-1.5 h-1.5 rounded-full mt-1.5" style={{ background: 'var(--border-medium)' }} />
                                             <span>
-                                                <span className="font-medium text-gray-700">
+                                                <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
                                                     {ACTION_LABELS[entry.action] || entry.action}
                                                 </span>
                                                 {entry.metadata?.from && entry.metadata?.to && (
                                                     <span> · {entry.metadata.from.slice(5)} → {entry.metadata.to.slice(5)}</span>
                                                 )}
-                                                <span className="ml-1 text-gray-400">
+                                                <span className="ml-1" style={{ color: 'var(--text-tertiary)' }}>
                                                     {format(parseISO(entry.timestamp), 'MMM d, h:mm a')}
                                                 </span>
                                             </span>
@@ -253,19 +247,21 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 border-t border-gray-100 shrink-0">
+                    <div className="px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                         {confirmDelete ? (
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleDelete}
                                     disabled={loading}
-                                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+                                    className="flex-1 py-2.5 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+                                    style={{ background: '#ef4444' }}
                                 >
                                     {loading ? 'Deleting…' : 'Yes, delete'}
                                 </button>
                                 <button
                                     onClick={() => setConfirmDelete(false)}
-                                    className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl"
+                                    className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -275,13 +271,15 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 <button
                                     onClick={handleSave}
                                     disabled={loading || !name.trim()}
-                                    className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl disabled:opacity-40"
+                                    className="flex-1 py-2.5 text-white text-sm font-medium rounded-xl disabled:opacity-40"
+                                    style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))' }}
                                 >
                                     {loading ? 'Saving…' : 'Save Changes'}
                                 </button>
                                 <button
                                     onClick={() => setEditing(false)}
-                                    className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl"
+                                    className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -292,20 +290,23 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                     <button
                                         onClick={handleComplete}
                                         disabled={loading}
-                                        className="py-2.5 px-4 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-xl disabled:opacity-50"
+                                        className="py-2.5 px-4 text-sm font-medium rounded-xl disabled:opacity-50"
+                                        style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80' }}
                                     >
                                         ✓ Done
                                     </button>
                                 )}
                                 <button
                                     onClick={() => setEditing(true)}
-                                    className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl"
+                                    className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
                                 >
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => setConfirmDelete(true)}
-                                    className="py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium rounded-xl"
+                                    className="py-2.5 px-4 text-sm font-medium rounded-xl"
+                                    style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
                                 >
                                     Delete
                                 </button>

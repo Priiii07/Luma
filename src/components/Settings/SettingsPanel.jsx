@@ -4,18 +4,10 @@ import { exportData, importData, clearAllData } from '../../utils/storageHelpers
 
 /**
  * Slide-in settings sidebar.
- *
- * Props:
- *   isOpen               – boolean
- *   onClose              – () => void
- *   preferences          – current preferences object
- *   onPreferencesChanged – (updated: Object) => void
- *   onDataCleared        – () => void   (callback after clearing all data)
- *   onDataImported       – () => void   (callback after importing data)
  */
 function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onDataCleared, onDataImported }) {
-    const [clearStep, setClearStep] = useState(0) // 0=idle, 1=first confirm, 2=clearing
-    const [importStatus, setImportStatus] = useState(null) // null | 'success' | 'error'
+    const [clearStep, setClearStep] = useState(0)
+    const [importStatus, setImportStatus] = useState(null)
 
     if (!preferences) return null
 
@@ -71,7 +63,6 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
     async function update(dotPath, value) {
         const keys = dotPath.split('.')
-        // Deep-clone so we don't mutate state
         const updated = JSON.parse(JSON.stringify(preferences))
         let obj = updated
         for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]]
@@ -101,19 +92,21 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
     return (
         <>
             {isOpen && (
-                <div className="fixed inset-0 bg-black/20 z-40" onMouseDown={onClose} />
+                <div className="fixed inset-0 bg-black/40 z-40" onMouseDown={onClose} />
             )}
 
             <div className={`
-                fixed right-0 top-0 w-96 h-screen bg-white shadow-2xl z-50
+                fixed right-0 top-0 w-96 h-screen shadow-2xl z-50
                 transition-transform duration-300 overflow-y-auto
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-            `}>
-                <div className="px-6 py-6 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-800">Settings</h3>
+            `} style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
+                <div className="px-6 py-6 flex justify-between items-center"
+                     style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Settings</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                        className="text-2xl leading-none transition-colors"
+                        style={{ color: 'var(--text-tertiary)' }}
                     >
                         ×
                     </button>
@@ -123,10 +116,11 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
                     {/* ── Daily Task Limit ── */}
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
+                            style={{ color: 'var(--purple-primary)' }}>
                             Daily Task Limit
                         </h4>
-                        <p className="text-xs text-gray-400 mb-3">
+                        <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
                             Max tasks per day at your peak (ovulation). Other phases scale automatically.
                         </p>
                         <div className="flex items-center gap-4">
@@ -139,11 +133,11 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                                 onChange={e => update('dailyTaskLimit', Number(e.target.value))}
                                 className="flex-1 accent-purple-600"
                             />
-                            <span className="w-6 text-center text-sm font-semibold text-gray-800">
+                            <span className="w-6 text-center text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                                 {preferences.dailyTaskLimit ?? 4}
                             </span>
                         </div>
-                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                             <span>Lighter</span>
                             <span>Heavier</span>
                         </div>
@@ -151,10 +145,11 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
                     {/* ── Rescheduling Behavior ── */}
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
+                            style={{ color: 'var(--purple-primary)' }}>
                             Scheduling Behavior
                         </h4>
-                        <p className="text-xs text-gray-400 mb-4">
+                        <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
                             When you log a new period and cycle phases shift, how should tasks be rescheduled?
                         </p>
                         <div className="space-y-3">
@@ -172,11 +167,11 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                             ].map(opt => (
                                 <label
                                     key={opt.value}
-                                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                                        preferences.reschedulingBehavior === opt.value
-                                            ? 'border-purple-400 bg-purple-50'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                    className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors"
+                                    style={{
+                                        border: `1px solid ${preferences.reschedulingBehavior === opt.value ? 'var(--purple-primary)' : 'var(--border-subtle)'}`,
+                                        background: preferences.reschedulingBehavior === opt.value ? 'rgba(198,120,221,0.1)' : 'transparent'
+                                    }}
                                 >
                                     <input
                                         type="radio"
@@ -187,8 +182,8 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                                         className="mt-0.5 accent-purple-600 w-4 h-4"
                                     />
                                     <div>
-                                        <p className="text-sm font-medium text-gray-800">{opt.label}</p>
-                                        <p className="text-xs text-gray-500">{opt.description}</p>
+                                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{opt.label}</p>
+                                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{opt.description}</p>
                                     </div>
                                 </label>
                             ))}
@@ -197,7 +192,8 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
                     {/* ── Notifications ── */}
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-4"
+                            style={{ color: 'var(--purple-primary)' }}>
                             Notifications
                         </h4>
                         <div className="space-y-4">
@@ -207,14 +203,13 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                                 return (
                                     <div key={item.key} className="flex items-start gap-3">
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
+                                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{item.description}</p>
                                         </div>
                                         <button
                                             onClick={() => update(item.key, !checked)}
-                                            className={`relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none ${
-                                                checked ? 'bg-purple-600' : 'bg-gray-300'
-                                            }`}
+                                            className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none"
+                                            style={{ background: checked ? 'var(--purple-primary)' : 'rgba(255,255,255,0.15)' }}
                                             role="switch"
                                             aria-checked={checked}
                                         >
@@ -230,65 +225,79 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
                     {/* ── Data Backup ── */}
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
+                            style={{ color: 'var(--purple-primary)' }}>
                             Data Backup
                         </h4>
-                        <p className="text-xs text-gray-400 mb-3">
+                        <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
                             Export your data as a JSON file or restore from a previous backup.
                         </p>
                         <div className="flex gap-3">
                             <button
                                 onClick={handleExport}
-                                className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors"
+                                className="flex-1 px-4 py-2.5 text-white text-sm font-medium rounded-xl transition-colors"
+                                style={{
+                                    background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                }}
                             >
                                 Export Backup
                             </button>
                             <button
                                 onClick={handleImport}
-                                className="flex-1 px-4 py-2.5 border border-purple-300 text-purple-700 hover:bg-purple-50 text-sm font-medium rounded-xl transition-colors"
+                                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                                style={{
+                                    border: '1px solid var(--purple-primary)',
+                                    color: 'var(--purple-light)',
+                                    background: 'transparent'
+                                }}
                             >
                                 Import Backup
                             </button>
                         </div>
                         {importStatus === 'success' && (
-                            <p className="text-xs text-green-600 mt-2">Data restored successfully!</p>
+                            <p className="text-xs mt-2" style={{ color: '#4ade80' }}>Data restored successfully!</p>
                         )}
                         {importStatus === 'error' && (
-                            <p className="text-xs text-red-600 mt-2">Import failed. Please check the file format.</p>
+                            <p className="text-xs mt-2" style={{ color: '#ef4444' }}>Import failed. Please check the file format.</p>
                         )}
                     </div>
 
                     {/* ── Clear All Data ── */}
                     <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
+                            style={{ color: '#ef4444' }}>
                             Danger Zone
                         </h4>
-                        <p className="text-xs text-gray-400 mb-3">
+                        <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
                             Permanently delete all your data. This cannot be undone.
                         </p>
                         {clearStep === 0 && (
                             <button
                                 onClick={handleClearAll}
-                                className="w-full px-4 py-2.5 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium rounded-xl transition-colors"
+                                className="w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-colors"
+                                style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', background: 'transparent' }}
                             >
                                 Clear All Data
                             </button>
                         )}
                         {clearStep === 1 && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-                                <p className="text-sm text-red-700 font-medium mb-2">
+                            <div className="p-3 rounded-xl"
+                                 style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                <p className="text-sm font-medium mb-2" style={{ color: 'rgba(252,165,165,0.9)' }}>
                                     Are you sure? All tasks, cycles, and settings will be deleted.
                                 </p>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={handleClearAll}
-                                        className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                        className="flex-1 px-3 py-2 text-white text-sm font-medium rounded-lg transition-colors"
+                                        style={{ background: '#ef4444' }}
                                     >
                                         Yes, Delete Everything
                                     </button>
                                     <button
                                         onClick={() => setClearStep(0)}
-                                        className="flex-1 px-3 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition-colors"
+                                        className="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                                        style={{ border: '1px solid var(--border-medium)', color: 'var(--text-secondary)', background: 'transparent' }}
                                     >
                                         Cancel
                                     </button>
@@ -296,7 +305,7 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                             </div>
                         )}
                         {clearStep === 2 && (
-                            <p className="text-sm text-gray-500">Clearing data...</p>
+                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Clearing data...</p>
                         )}
                     </div>
                 </div>

@@ -15,21 +15,21 @@ function OverloadBanner({ warnings = [], onDismiss }) {
 
     const configs = {
         high: {
-            bg: 'bg-red-50',
-            border: 'border-red-400',
-            text: 'text-red-800',
+            bg: 'rgba(239,68,68,0.1)',
+            border: 'rgba(239,68,68,0.5)',
+            text: 'rgba(252,165,165,0.9)',
             icon: '⚠️'
         },
         medium: {
-            bg: 'bg-amber-50',
-            border: 'border-amber-400',
-            text: 'text-amber-800',
+            bg: 'rgba(251,191,36,0.1)',
+            border: 'rgba(251,191,36,0.5)',
+            text: 'rgba(253,224,71,0.9)',
             icon: '⚡'
         },
         low: {
-            bg: 'bg-blue-50',
-            border: 'border-blue-300',
-            text: 'text-blue-800',
+            bg: 'rgba(96,165,250,0.1)',
+            border: 'rgba(96,165,250,0.4)',
+            text: 'rgba(147,197,253,0.9)',
             icon: '💡'
         }
     }
@@ -48,7 +48,12 @@ function OverloadBanner({ warnings = [], onDismiss }) {
                 return (
                     <div
                         key={w.id}
-                        className={`mx-6 mb-2 px-4 py-3 ${cfg.bg} border-l-4 ${cfg.border} rounded flex items-start gap-3 text-sm ${cfg.text}`}
+                        className="mx-6 mb-2 px-4 py-3 rounded flex items-start gap-3 text-sm"
+                        style={{
+                            background: cfg.bg,
+                            borderLeft: `4px solid ${cfg.border}`,
+                            color: cfg.text
+                        }}
                     >
                         <span className="mt-0.5 shrink-0 text-base">{cfg.icon}</span>
                         <div className="flex-1 min-w-0">

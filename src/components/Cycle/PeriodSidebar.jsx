@@ -8,10 +8,8 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
     const [endDate, setEndDate] = useState(null)
     const [cycleStats, setCycleStats] = useState(null)
     const [loading, setLoading] = useState(false)
-    // Holds the existing cycle if user tries to log a duplicate month
     const [duplicateWarning, setDuplicateWarning] = useState(null)
 
-    // Load cycle statistics when sidebar opens
     useEffect(() => {
         if (isOpen) {
             loadStats()
@@ -27,11 +25,9 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
         }
     }
 
-    // Convert Date objects to 'yyyy-MM-dd' strings for storage
     const startDateStr = startDate ? format(startDate, 'yyyy-MM-dd') : ''
     const endDateStr = endDate ? format(endDate, 'yyyy-MM-dd') : null
 
-    // Core save logic — called both on first submit (no duplicate) and after user confirms replace
     const saveCycle = async () => {
         setLoading(true)
         try {
@@ -52,13 +48,10 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-
-        // Check for a same-month entry (non-overlapping duplicates slip past the DB overlap check)
-        const newMonth = startDateStr.substring(0, 7) // 'YYYY-MM'
+        const newMonth = startDateStr.substring(0, 7)
         const existing = cycles.find(c => c.startDate.substring(0, 7) === newMonth)
 
         if (existing) {
-            // Pause and ask the user what to do
             setDuplicateWarning(existing)
             return
         }
@@ -66,9 +59,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
         await saveCycle()
     }
 
-    // User chose to replace the existing entry
     const handleConfirmReplace = async () => {
-        // Delete the duplicate from DB before calling logCycle so there's no conflict
         if (duplicateWarning?.id) {
             await db.cycles.delete(duplicateWarning.id)
         }
@@ -80,22 +71,24 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40"
+                    className="fixed inset-0 bg-black/40 z-40"
                     onMouseDown={onClose}
                 ></div>
             )}
 
             {/* Sidebar */}
             <div className={`
-        fixed right-0 top-0 w-96 h-screen bg-white shadow-2xl z-50
-        transition-transform duration-300 overflow-y-auto
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-      `}>
-                <div className="px-6 py-6 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-800">Log Period</h3>
+                fixed right-0 top-0 w-96 h-screen shadow-2xl z-50
+                transition-transform duration-300 overflow-y-auto
+                ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+            `} style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
+                <div className="px-6 py-6 flex justify-between items-center"
+                     style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Log Period</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                        className="text-2xl leading-none transition-colors"
+                        style={{ color: 'var(--text-tertiary)' }}
                     >
                         ×
                     </button>
@@ -104,11 +97,12 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                 <div className="px-6 py-6">
                     {/* Duplicate month confirmation prompt */}
                     {duplicateWarning && (
-                        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                            <p className="text-sm font-medium text-amber-900 mb-1">
+                        <div className="mb-6 p-4 rounded-xl"
+                             style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)' }}>
+                            <p className="text-sm font-medium mb-1" style={{ color: 'rgba(253,224,71,0.9)' }}>
                                 Period already logged for this month
                             </p>
-                            <p className="text-xs text-amber-700 mb-4">
+                            <p className="text-xs mb-4" style={{ color: 'rgba(251,191,36,0.7)' }}>
                                 You already have a period logged starting{' '}
                                 <strong>{format(parseISO(duplicateWarning.startDate), 'MMM d, yyyy')}</strong>.
                                 Replace it with the new dates?
@@ -118,14 +112,16 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                                     type="button"
                                     onClick={handleConfirmReplace}
                                     disabled={loading}
-                                    className="flex-1 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    className="flex-1 px-3 py-2 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                    style={{ background: 'rgba(251,191,36,0.6)' }}
                                 >
                                     {loading ? 'Replacing...' : 'Replace'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setDuplicateWarning(null)}
-                                    className="flex-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                    className="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
+                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -135,7 +131,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
 
                     <form onSubmit={handleSubmit}>
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Period Start Date *
                             </label>
                             <DatePicker
@@ -143,18 +139,17 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                                 onChange={(date) => setStartDate(date)}
                                 dateFormat="MMM d, yyyy"
                                 maxDate={new Date()}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                                 placeholderText="Select start date"
                                 required
                             />
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                                 This resets your cycle to Day 1
                             </div>
                         </div>
 
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Period End Date (Optional)
                             </label>
                             <DatePicker
@@ -163,12 +158,11 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                                 dateFormat="MMM d, yyyy"
                                 minDate={startDate}
                                 maxDate={new Date()}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                                 placeholderText="Select end date"
                                 isClearable
                             />
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                                 Helps us predict your cycle better
                             </div>
                         </div>
@@ -176,19 +170,23 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white 
-                       rounded-lg text-sm font-medium transition-colors mt-6 disabled:opacity-50"
+                            className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-all mt-6 disabled:opacity-50"
+                            style={{
+                                background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                boxShadow: '0 2px 12px var(--purple-glow)'
+                            }}
                         >
                             {loading ? 'Logging...' : 'Log Period'}
                         </button>
 
                         {/* Cycle Stats */}
                         {cycleStats && cycleStats.totalCyclesLogged > 0 && (
-                            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                                <div className="text-sm font-medium text-gray-800 mb-2">
+                            <div className="mt-6 p-4 rounded-lg"
+                                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}>
+                                <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                                     Your Cycle Stats
                                 </div>
-                                <div className="text-sm text-gray-600 leading-relaxed">
+                                <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                                     Average cycle length: {cycleStats.averageCycleLength} days<br />
                                     Average period duration: {cycleStats.averagePeriodDuration} days<br />
                                     Last period: {cycleStats.lastPeriodDate ? format(new Date(cycleStats.lastPeriodDate), 'MMM d, yyyy') : 'N/A'}<br />
@@ -198,8 +196,9 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                         )}
 
                         {cycleStats && cycleStats.totalCyclesLogged === 0 && (
-                            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                <div className="text-sm text-blue-800">
+                            <div className="mt-6 p-4 rounded-lg"
+                                 style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)' }}>
+                                <div className="text-sm" style={{ color: 'rgba(147,197,253,0.9)' }}>
                                     💡 Log your first period to start tracking your cycle!
                                 </div>
                             </div>
@@ -212,4 +211,3 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
 }
 
 export default PeriodSidebar
-

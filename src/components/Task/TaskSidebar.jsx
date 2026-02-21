@@ -13,8 +13,8 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
     const [loading, setLoading] = useState(false)
 
     // Overload warning state
-    const [pendingTask, setPendingTask] = useState(null)       // task object awaiting save
-    const [scheduleInfo, setScheduleInfo] = useState(null)     // result from scheduleTaskWithAlternatives
+    const [pendingTask, setPendingTask] = useState(null)
+    const [scheduleInfo, setScheduleInfo] = useState(null)
     const [showWarning, setShowWarning] = useState(false)
 
     const handleDayToggle = (day) => {
@@ -36,11 +36,9 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                 autoScheduled: true
             }
 
-            // Get scheduling info including overload check
             const info = scheduleTaskWithAlternatives(task, tasks, cycles, userPreferences)
 
             if (info.isAtCapacity) {
-                // Pause and show the warning modal
                 setPendingTask(task)
                 setScheduleInfo(info)
                 setShowWarning(true)
@@ -48,7 +46,6 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                 return
             }
 
-            // No overload — save directly
             await saveTask(task, info.scheduledDate)
         } catch (error) {
             console.error('Error creating task:', error)
@@ -57,7 +54,6 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
         }
     }
 
-    // Called when user picks "Add Anyway" or selects an alternative
     const handleConfirmSave = async (dateOverride) => {
         setShowWarning(false)
         setLoading(true)
@@ -100,22 +96,24 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40"
+                    className="fixed inset-0 bg-black/40 z-40"
                     onMouseDown={onClose}
                 ></div>
             )}
 
             {/* Sidebar */}
             <div className={`
-        fixed right-0 top-0 w-96 h-screen bg-white shadow-2xl z-50
-        transition-transform duration-300 overflow-y-auto
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-      `}>
-                <div className="px-6 py-6 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-800">Add New Task</h3>
+                fixed right-0 top-0 w-96 h-screen shadow-2xl z-50
+                transition-transform duration-300 overflow-y-auto
+                ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+            `} style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
+                <div className="px-6 py-6 flex justify-between items-center"
+                     style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Add New Task</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                        className="text-2xl leading-none transition-colors"
+                        style={{ color: 'var(--text-tertiary)' }}
                     >
                         ×
                     </button>
@@ -124,7 +122,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                 <div className="px-6 py-6">
                     <form onSubmit={handleSubmit}>
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Task Name *
                             </label>
                             <input
@@ -133,32 +131,41 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                                 required
                                 value={taskName}
                                 onChange={(e) => setTaskName(e.target.value)}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                         focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid var(--border-medium)',
+                                    color: 'var(--text-primary)'
+                                }}
                             />
                         </div>
 
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Energy Type
                             </label>
                             <select
                                 value={energyLevel}
                                 onChange={(e) => setEnergyLevel(e.target.value)}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                               focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600">
+                                className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid var(--border-medium)',
+                                    color: 'var(--text-primary)'
+                                }}
+                            >
                                 <option value="">Auto-detect</option>
                                 <option value="low">Low Energy</option>
                                 <option value="medium">Medium Energy</option>
                                 <option value="high">High Energy</option>
                             </select>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                                 We'll suggest the best time based on this
                             </div>
                         </div>
 
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Deadline (Optional)
                             </label>
                             <DatePicker
@@ -166,34 +173,34 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                                 onChange={(date) => setDeadline(date)}
                                 dateFormat="MMM d, yyyy"
                                 minDate={new Date()}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                                    focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                                className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                                 placeholderText="Select deadline"
                                 isClearable
                             />
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                                 We'll prioritize scheduling before this date
                             </div>
                         </div>
 
                         <div className="mb-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                 Preferred Days (Optional)
                             </label>
                             <div className="flex gap-2 flex-wrap mt-2">
                                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                                    <label key={day} className="flex items-center gap-1.5 font-normal text-sm">
+                                    <label key={day} className="flex items-center gap-1.5 font-normal text-sm"
+                                           style={{ color: 'var(--text-secondary)' }}>
                                         <input
                                             type="checkbox"
                                             checked={preferredDays.includes(day)}
                                             onChange={() => handleDayToggle(day)}
-                                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-600"
+                                            className="rounded"
                                         />
                                         {day}
                                     </label>
                                 ))}
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                                 Weekends preferred by default
                             </div>
                         </div>
@@ -201,8 +208,11 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white
-                       rounded-lg text-sm font-medium transition-colors mt-6 disabled:opacity-50"
+                            className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-all mt-6 disabled:opacity-50"
+                            style={{
+                                background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+                                boxShadow: '0 2px 12px var(--purple-glow)'
+                            }}
                         >
                             {loading ? 'Creating...' : 'Create Task'}
                         </button>
@@ -210,7 +220,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                 </div>
             </div>
 
-            {/* Overload warning modal — rendered outside sidebar so it appears above z-50 */}
+            {/* Overload warning modal */}
             {scheduleInfo && (
                 <OverloadWarningModal
                     isOpen={showWarning}

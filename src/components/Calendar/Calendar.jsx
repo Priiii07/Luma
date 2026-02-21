@@ -87,7 +87,8 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
                 {/* Weekday headers */}
                 <div className="grid grid-cols-7 gap-2 mb-2">
                     {weekdays.map(day => (
-                        <div key={day} className="text-center text-xs font-semibold text-gray-500 uppercase p-2">
+                        <div key={day} className="text-center text-xs font-semibold uppercase p-2"
+                             style={{ color: 'var(--text-tertiary)' }}>
                             {day}
                         </div>
                     ))}

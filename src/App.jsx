@@ -225,8 +225,14 @@ function App() {
   const visibleWarnings = warnings.filter((w) => !dismissedWarnings.has(w.id));
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <div className="flex-1 bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+      {/* Ambient background orbs */}
+      <div className="ember-bg">
+        <div className="ember-orb-1" />
+        <div className="ember-orb-2" />
+      </div>
+
+      <div className="flex-1 flex flex-col relative z-[1]">
         <Header
           currentPhase={currentPhaseInfo.phase || "Unknown"}
           cycleDay={currentPhaseInfo.cycleDay || 0}
@@ -253,7 +259,8 @@ function App() {
 
         {/* Auto-reschedule confirmation toast (automatic mode) */}
         {rescheduleNotification > 0 && (
-          <div className="mx-6 mb-3 px-4 py-3 bg-purple-50 border-l-4 border-purple-400 rounded flex items-center gap-3 text-sm text-purple-800">
+          <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
+               style={{ background: 'rgba(198,120,221,0.12)', borderLeft: '4px solid var(--purple-primary)', color: 'var(--purple-light)' }}>
             <span>✨</span>
             <span>
               {rescheduleNotification} task
@@ -273,7 +280,8 @@ function App() {
         {!showReviewPanel &&
           pullForwardSuggestions.length > 0 &&
           isOnboarded && (
-            <div className="mx-6 mb-3 px-4 py-3 bg-blue-50 border-l-4 border-blue-300 rounded flex items-center gap-3 text-sm text-blue-800">
+            <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
+                 style={{ background: 'rgba(96,165,250,0.1)', borderLeft: '4px solid rgba(96,165,250,0.5)', color: 'rgba(147,197,253,0.9)' }}>
               <span>💡</span>
               <span>
                 You have free slots in an upcoming high-energy week. Pull
@@ -281,7 +289,8 @@ function App() {
               </span>
               <button
                 onClick={() => setShowReviewPanel(true)}
-                className="ml-auto shrink-0 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                className="ml-auto shrink-0 px-3 py-1 text-white text-xs font-medium rounded-lg transition-colors"
+                style={{ background: 'var(--purple-primary)' }}
               >
                 Review
               </button>
@@ -352,20 +361,27 @@ function App() {
         href="https://forms.gle/WPBeFiHXHktwTQTx8"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium transition-colors"
+        className="fixed bottom-6 right-6 z-40 text-white px-4 py-3 rounded-full flex items-center gap-2 text-sm font-medium transition-all"
+        style={{
+          background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
+          boxShadow: '0 4px 20px var(--purple-glow)'
+        }}
       >
         <span>💬</span>
         <span>Feedback</span>
       </a>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs text-gray-500">
+      <footer className="relative z-[1] px-6 py-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>Cycle-Aware Planner — Beta</span>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowPrivacy(true)}
-              className="hover:text-purple-600 transition-colors"
+              className="transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--purple-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
             >
               Privacy
             </button>
@@ -373,7 +389,10 @@ function App() {
               href="https://forms.gle/WPBeFiHXHktwTQTx8"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-purple-600 transition-colors"
+              className="transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--purple-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
             >
               Feedback
             </a>

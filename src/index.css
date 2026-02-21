@@ -1,13 +1,46 @@
+/* ── Ember Theme Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS Custom Properties ── */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  --bg-primary: #0d0d12;
+  --bg-secondary: #1a1a1f;
+  --bg-tertiary: rgba(255,255,255,0.04);
+
+  --text-primary: #f0eee8;
+  --text-secondary: rgba(240,238,232,0.6);
+  --text-tertiary: rgba(240,238,232,0.35);
+
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-medium: rgba(255,255,255,0.15);
+  --border-strong: rgba(255,255,255,0.25);
+
+  --purple-primary: #c678dd;
+  --purple-dark: #9b4db0;
+  --purple-light: #d088ed;
+  --purple-glow: rgba(198,120,221,0.3);
+
+  --terracotta: #dc643c;
+  --terracotta-glow: rgba(220,100,60,0.2);
+
+  --phase-menstrual: rgba(200,60,80,0.2);
+  --phase-menstrual-border: rgba(200,60,80,0.4);
+  --phase-follicular: rgba(210,140,40,0.18);
+  --phase-follicular-border: rgba(210,140,40,0.35);
+  --phase-ovulation: rgba(160,70,220,0.22);
+  --phase-ovulation-border: rgba(160,70,220,0.45);
+  --phase-luteal: rgba(100,100,130,0.18);
+  --phase-luteal-border: rgba(100,100,130,0.3);
+
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
-  color: #213547;
-  background-color: #f3f4f6;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,6 +51,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Reset Vite's opinionated button defaults so Tailwind classes work cleanly */
@@ -29,37 +64,135 @@ button {
   cursor: pointer;
 }
 
-/* Style react-datepicker to match app theme */
+/* ── Ambient Background Orbs ── */
+.ember-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ember-orb-1 {
+  position: absolute;
+  top: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(180,80,200,0.12) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: ember-float-1 20s ease-in-out infinite;
+}
+
+.ember-orb-2 {
+  position: absolute;
+  bottom: -100px;
+  left: -200px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(220,100,60,0.08) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: ember-float-2 25s ease-in-out infinite;
+}
+
+@keyframes ember-float-1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-30px, 30px); }
+}
+
+@keyframes ember-float-2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(40px, -40px); }
+}
+
+/* ── Animations ── */
+@keyframes ember-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ember-slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── react-datepicker dark theme ── */
 .react-datepicker-wrapper {
   width: 100%;
 }
 .react-datepicker__input-container input {
   width: 100%;
 }
+.react-datepicker {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-medium) !important;
+  color: var(--text-primary) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
 .react-datepicker__header {
-  background-color: #f3e8ff !important;
-  border-bottom-color: #e9d5ff !important;
+  background-color: rgba(198,120,221,0.1) !important;
+  border-bottom-color: var(--border-subtle) !important;
 }
 .react-datepicker__current-month,
 .react-datepicker__day-name {
-  color: #6b21a8 !important;
+  color: var(--purple-primary) !important;
+}
+.react-datepicker__day {
+  color: var(--text-primary) !important;
+}
+.react-datepicker__day:hover {
+  background-color: rgba(198,120,221,0.15) !important;
 }
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
-  background-color: #9333ea !important;
+  background-color: var(--purple-primary) !important;
   color: white !important;
 }
-.react-datepicker__day:hover {
-  background-color: #f3e8ff !important;
+.react-datepicker__day--outside-month {
+  color: var(--text-tertiary) !important;
 }
 .react-datepicker__navigation-icon::before {
-  border-color: #9333ea;
+  border-color: var(--purple-primary);
 }
 .react-datepicker-popper {
   z-index: 60 !important;
 }
 .react-datepicker__close-icon::after {
-  background-color: #9333ea;
+  background-color: var(--purple-primary);
+}
+.react-datepicker__triangle {
+  display: none;
+}
+
+/* ── Dark form inputs ── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  border-radius: 0.375rem;
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--purple-primary);
+  box-shadow: 0 0 0 1px var(--purple-primary);
+  outline: none;
+}
+input::placeholder {
+  color: var(--text-tertiary);
+}
+select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 /* Ensure native radio/checkbox inputs keep their browser appearance */
@@ -67,4 +200,24 @@ input[type="radio"],
 input[type="checkbox"] {
   appearance: auto;
   -webkit-appearance: auto;
+}
+
+/* ── Hover brightness for calendar days ── */
+.hover\:brightness-110:hover {
+  filter: brightness(1.15);
+}
+
+/* ── Scrollbar styling (dark) ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
 }
