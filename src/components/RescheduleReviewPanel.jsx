@@ -3,25 +3,12 @@ import { format, parseISO } from 'date-fns'
 import { applyRescheduling } from '../utils/reschedulingEngine'
 import { updateTask, logTaskHistory } from '../utils/storageHelpers'
 
-/**
- * Modal for reviewing two kinds of schedule suggestions:
- *   1. Reschedule — tasks whose dates worsened after a cycle update
- *   2. Pull-forward — tasks that could move into underutilised ovulation slots
- *
- * Props:
- *   isOpen        – boolean
- *   onClose       – () => void
- *   suggestions   – output of checkAndReschedule().suggestions
- *   pullForward   – output of suggestPullForward()
- *   onApplied     – async () => void  (reload tasks after changes)
- */
 function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward = [], onApplied }) {
     const [accepted, setAccepted] = useState(new Set())
     const [rejected, setRejected] = useState(new Set())
     const [loading, setLoading] = useState(false)
     const [activeTab, setActiveTab] = useState('reschedule')
 
-    // Reset selection state when new suggestions arrive
     useEffect(() => {
         setAccepted(new Set())
         setRejected(new Set())
@@ -101,46 +88,49 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
+            <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col pointer-events-auto">
+                <div className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col pointer-events-auto"
+                     style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                     {/* Header */}
-                    <div className="px-6 py-5 border-b border-gray-200 flex justify-between items-start shrink-0">
+                    <div className="px-6 py-5 flex justify-between items-start shrink-0"
+                         style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Schedule Review</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">Review suggested changes to your schedule</p>
+                            <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Schedule Review</h3>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>Review suggested changes to your schedule</p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4"
+                            className="text-2xl leading-none ml-4"
+                            style={{ color: 'var(--text-tertiary)' }}
                         >
                             ×
                         </button>
                     </div>
 
-                    {/* Tabs — only shown when both types exist */}
+                    {/* Tabs */}
                     {hasSuggestions && hasPullForward && (
-                        <div className="flex border-b border-gray-200 px-6 shrink-0">
+                        <div className="flex px-6 shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                             <button
                                 onClick={() => setActiveTab('reschedule')}
-                                className={`py-3 mr-6 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === 'reschedule'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
+                                className="py-3 mr-6 text-sm font-medium border-b-2 transition-colors"
+                                style={{
+                                    borderColor: activeTab === 'reschedule' ? 'var(--purple-primary)' : 'transparent',
+                                    color: activeTab === 'reschedule' ? 'var(--purple-primary)' : 'var(--text-tertiary)'
+                                }}
                             >
                                 Rescheduling ({suggestions.length})
                             </button>
                             <button
                                 onClick={() => setActiveTab('pullforward')}
-                                className={`py-3 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === 'pullforward'
-                                        ? 'border-purple-600 text-purple-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                }`}
+                                className="py-3 text-sm font-medium border-b-2 transition-colors"
+                                style={{
+                                    borderColor: activeTab === 'pullforward' ? 'var(--purple-primary)' : 'transparent',
+                                    color: activeTab === 'pullforward' ? 'var(--purple-primary)' : 'var(--text-tertiary)'
+                                }}
                             >
                                 Pull Forward ({pullForwardCount})
                             </button>
@@ -150,49 +140,48 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                     {/* Body */}
                     <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
 
-                        {/* — Reschedule suggestions — */}
+                        {/* Reschedule suggestions */}
                         {(!hasPullForward || activeTab === 'reschedule') && hasSuggestions && (
                             suggestions.map(s => (
                                 <div
                                     key={s.task.id}
-                                    className={`p-4 rounded-xl border transition-colors ${
-                                        accepted.has(s.task.id)
-                                            ? 'border-green-300 bg-green-50'
-                                            : rejected.has(s.task.id)
-                                            ? 'border-gray-200 bg-gray-50 opacity-50'
-                                            : 'border-gray-200 bg-white'
-                                    }`}
+                                    className="p-4 rounded-xl transition-colors"
+                                    style={{
+                                        border: `1px solid ${accepted.has(s.task.id) ? 'rgba(74,222,128,0.4)' : rejected.has(s.task.id) ? 'var(--border-subtle)' : 'var(--border-subtle)'}`,
+                                        background: accepted.has(s.task.id) ? 'rgba(74,222,128,0.08)' : rejected.has(s.task.id) ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
+                                        opacity: rejected.has(s.task.id) ? 0.5 : 1
+                                    }}
                                 >
-                                    <p className="font-medium text-gray-900 text-sm mb-2">{s.task.name}</p>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                                    <p className="font-medium text-sm mb-2" style={{ color: 'var(--text-primary)' }}>{s.task.name}</p>
+                                    <div className="flex items-center gap-2 text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>
                                         <span className="line-through">{format(parseISO(s.currentDate), 'MMM d')}</span>
                                         <span>→</span>
-                                        <span className="text-green-700 font-medium">
+                                        <span className="font-medium" style={{ color: '#4ade80' }}>
                                             {format(parseISO(s.suggestedDate), 'MMM d')}
                                         </span>
-                                        <span className="ml-auto text-purple-600 font-semibold">
+                                        <span className="ml-auto font-semibold" style={{ color: 'var(--purple-primary)' }}>
                                             +{s.scoreImprovement} pts
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-400 mb-3">{s.reason}</p>
+                                    <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>{s.reason}</p>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => toggleAccept(s.task.id)}
-                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                                accepted.has(s.task.id)
-                                                    ? 'bg-green-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
-                                            }`}
+                                            className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            style={{
+                                                background: accepted.has(s.task.id) ? '#4ade80' : 'rgba(255,255,255,0.05)',
+                                                color: accepted.has(s.task.id) ? '#000' : 'var(--text-secondary)'
+                                            }}
                                         >
                                             {accepted.has(s.task.id) ? '✓ Accepted' : 'Accept'}
                                         </button>
                                         <button
                                             onClick={() => toggleReject(s.task.id)}
-                                            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                                rejected.has(s.task.id)
-                                                    ? 'bg-gray-400 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
+                                            className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                            style={{
+                                                background: rejected.has(s.task.id) ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+                                                color: 'var(--text-secondary)'
+                                            }}
                                         >
                                             {rejected.has(s.task.id) ? 'Rejected' : 'Reject'}
                                         </button>
@@ -201,22 +190,23 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                             ))
                         )}
 
-                        {/* — Pull-forward suggestions — */}
+                        {/* Pull-forward suggestions */}
                         {(activeTab === 'pullforward' || !hasSuggestions) && hasPullForward && (
                             pullForward.map((group, gi) => (
                                 <div key={gi}>
-                                    <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--purple-primary)' }}>
                                         {format(group.period.start, 'MMM d')}–{format(group.period.end, 'MMM d')}
                                         {' '}· {group.availableSlots} open slot{group.availableSlots !== 1 ? 's' : ''}
                                     </p>
                                     {group.candidates.map((c, ci) => (
-                                        <div key={ci} className="p-3 mb-2 rounded-xl border border-gray-200 bg-white flex items-start gap-3">
+                                        <div key={ci} className="p-3 mb-2 rounded-xl flex items-start gap-3"
+                                             style={{ border: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.03)' }}>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{c.task.name}</p>
-                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{c.task.name}</p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
                                                     {format(parseISO(c.currentDate), 'MMM d')}
                                                     {' → '}
-                                                    <span className="text-purple-600 font-medium">
+                                                    <span className="font-medium" style={{ color: 'var(--purple-primary)' }}>
                                                         {format(parseISO(c.suggestedDate), 'MMM d')}
                                                     </span>
                                                     {' · '}{c.energyMatch} match
@@ -225,7 +215,8 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                             <button
                                                 onClick={() => handlePullForward(c)}
                                                 disabled={loading}
-                                                className="shrink-0 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                                                className="shrink-0 px-3 py-1.5 text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                                                style={{ background: 'var(--purple-primary)' }}
                                             >
                                                 Move
                                             </button>
@@ -236,20 +227,22 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                         )}
                     </div>
 
-                    {/* Footer — reschedule actions */}
+                    {/* Footer */}
                     {(!hasPullForward || activeTab === 'reschedule') && hasSuggestions && (
-                        <div className="px-6 py-4 border-t border-gray-200 flex gap-3 shrink-0">
+                        <div className="px-6 py-4 flex gap-3 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                             <button
                                 onClick={handleApplySelected}
                                 disabled={loading || accepted.size === 0}
-                                className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
+                                className="flex-1 py-2.5 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
+                                style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))' }}
                             >
                                 {loading ? 'Applying…' : `Apply Selected (${accepted.size})`}
                             </button>
                             <button
                                 onClick={handleApplyAll}
                                 disabled={loading}
-                                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
+                                className="flex-1 py-2.5 text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
+                                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
                             >
                                 Apply All
                             </button>

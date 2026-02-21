@@ -6,20 +6,13 @@ import { loadUserPreferences, saveUserPreferences } from '../../store/userPrefer
 
 const STEPS = ['welcome', 'first_period', 'second_period', 'daily_limit', 'complete']
 
-/**
- * Full-screen onboarding overlay shown until 2 cycles are logged.
- * Props:
- *   cyclesLogged  - number of cycles already in DB (so we can resume mid-flow)
- *   onComplete    - called after the final step; parent should reload cycles
- */
 function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
-    // Resume from the right step if the user already has 1 cycle
     const initialStep = cyclesLogged === 0 ? 'welcome'
         : cyclesLogged === 1 ? 'second_period'
         : 'complete'
 
     const [step, setStep] = useState(initialStep)
-    const [firstPeriodStart, setFirstPeriodStart] = useState(null) // remember for hint text
+    const [firstPeriodStart, setFirstPeriodStart] = useState(null)
     const [startDate, setStartDate] = useState(null)
     const [endDate, setEndDate] = useState(null)
     const [dailyLimit, setDailyLimit] = useState(4)
@@ -29,7 +22,6 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
     const today = new Date()
     const stepIndex = STEPS.indexOf(step)
 
-    // Convert Date objects to 'yyyy-MM-dd' strings for storage
     const startDateStr = startDate ? format(startDate, 'yyyy-MM-dd') : ''
     const endDateStr = endDate ? format(endDate, 'yyyy-MM-dd') : null
 
@@ -58,7 +50,6 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
     async function handleSecondPeriod(e) {
         e.preventDefault()
 
-        // Second period must be earlier than the first
         const referenceDate = firstPeriodStart || (cyclesLogged === 1 ? null : null)
         if (referenceDate && startDate >= new Date(referenceDate)) {
             setError(`This period should be from an earlier month than the one you already logged (${format(parseISO(referenceDate), 'MMMM')}).`)
@@ -81,35 +72,34 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
         }
     }
 
-    // Shared period log form used in both period steps
     function PeriodForm({ onSubmit }) {
         return (
             <form onSubmit={onSubmit} className="space-y-4">
                 {error && (
-                    <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+                    <div className="text-sm px-4 py-3 rounded-lg"
+                         style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: 'rgba(252,165,165,0.9)' }}>
                         {error}
                     </div>
                 )}
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Period Start Date <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Period Start Date <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <DatePicker
                         selected={startDate}
                         onChange={(date) => { setStartDate(date); setError('') }}
                         dateFormat="MMM d, yyyy"
                         maxDate={today}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                                   focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                        className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                         placeholderText="Select start date"
                         required
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Period End Date <span className="text-gray-400 font-normal">(optional)</span>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Period End Date <span className="font-normal" style={{ color: 'var(--text-tertiary)' }}>(optional)</span>
                     </label>
                     <DatePicker
                         selected={endDate}
@@ -117,19 +107,18 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                         dateFormat="MMM d, yyyy"
                         minDate={startDate}
                         maxDate={today}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm
-                                   focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                        className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                         placeholderText="Select end date"
                         isClearable
                     />
-                    <p className="text-xs text-gray-500 mt-1">Helps us calculate your cycle length accurately</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Helps us calculate your cycle length accurately</p>
                 </div>
 
                 <button
                     type="submit"
                     disabled={loading || !startDate}
-                    className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white
-                               rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))' }}
                 >
                     {loading ? 'Saving...' : 'Save & Continue →'}
                 </button>
@@ -138,19 +127,29 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
     }
 
     return (
-        <div className="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style={{ background: 'var(--bg-primary)' }}>
+            {/* Ambient orbs behind onboarding card */}
+            <div className="ember-bg">
+                <div className="ember-orb-1" />
+                <div className="ember-orb-2" />
+            </div>
+
+            <div className="rounded-2xl shadow-2xl w-full max-w-md p-8 relative z-10"
+                 style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                 {/* Progress dots */}
                 <div className="flex gap-2 justify-center mb-8">
                     {STEPS.map((s, i) => (
                         <div
                             key={s}
-                            className={`h-2 rounded-full transition-all ${
-                                i === stepIndex ? 'w-6 bg-purple-600'
-                                : i < stepIndex ? 'w-2 bg-purple-300'
-                                : 'w-2 bg-gray-200'
-                            }`}
+                            className="h-2 rounded-full transition-all"
+                            style={{
+                                width: i === stepIndex ? '24px' : '8px',
+                                background: i === stepIndex ? 'var(--purple-primary)'
+                                    : i < stepIndex ? 'var(--purple-dark)'
+                                    : 'rgba(255,255,255,0.1)'
+                            }}
                         />
                     ))}
                 </div>
@@ -159,16 +158,18 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 {step === 'welcome' && (
                     <div className="text-center">
                         <div className="text-5xl mb-4">🌙</div>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">Welcome to Luma</h2>
-                        <p className="text-gray-600 mb-4 leading-relaxed">
+                        <h2 className="text-2xl font-serif italic mb-3" style={{ color: 'var(--text-primary)' }}>Welcome to Luma</h2>
+                        <p className="mb-4 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                             This app schedules your tasks based on your energy throughout your menstrual cycle — so you work <em>with</em> your body, not against it.
                         </p>
-                        <p className="text-sm text-gray-500 bg-purple-50 rounded-xl px-4 py-3 mb-8">
+                        <p className="text-sm rounded-xl px-4 py-3 mb-8"
+                           style={{ background: 'rgba(198,120,221,0.1)', color: 'var(--purple-light)', border: '1px solid rgba(198,120,221,0.2)' }}>
                             To get started, log your <strong>2 most recent periods</strong>. This lets us calculate your cycle length and phase patterns.
                         </p>
                         <button
                             onClick={() => setStep('first_period')}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
+                            style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))', boxShadow: '0 2px 12px var(--purple-glow)' }}
                         >
                             Get Started →
                         </button>
@@ -179,9 +180,9 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 {step === 'first_period' && (
                     <div>
                         <div className="mb-6">
-                            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Step 1 of 2</p>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-2">Log Your Most Recent Period</h2>
-                            <p className="text-sm text-gray-500">When did your last period start?</p>
+                            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--purple-primary)' }}>Step 1 of 2</p>
+                            <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Log Your Most Recent Period</h2>
+                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>When did your last period start?</p>
                         </div>
                         <PeriodForm onSubmit={handleFirstPeriod} />
                     </div>
@@ -191,9 +192,9 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 {step === 'second_period' && (
                     <div>
                         <div className="mb-6">
-                            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Step 2 of 2</p>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-2">Log Your Previous Period</h2>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--purple-primary)' }}>Step 2 of 2</p>
+                            <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Log Your Previous Period</h2>
+                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                                 Now log the period <strong>before</strong> that one
                                 {firstPeriodStart ? ` — the one before ${format(parseISO(firstPeriodStart), 'MMMM')}` : ''}.
                                 This helps us calculate your average cycle length.
@@ -207,15 +208,16 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 {step === 'daily_limit' && (
                     <div>
                         <div className="mb-6">
-                            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Almost done</p>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-2">How many tasks can you handle per day?</h2>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--purple-primary)' }}>Almost done</p>
+                            <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>How many tasks can you handle per day?</h2>
+                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                                 We'll use this to avoid overloading your schedule. You can always change it later in Settings.
                             </p>
                         </div>
 
                         {error && (
-                            <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg mb-4">
+                            <div className="text-sm px-4 py-3 rounded-lg mb-4"
+                                 style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: 'rgba(252,165,165,0.9)' }}>
                                 {error}
                             </div>
                         )}
@@ -226,11 +228,12 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                                     key={n}
                                     type="button"
                                     onClick={() => setDailyLimit(n)}
-                                    className={`flex flex-col items-center py-3 rounded-xl border-2 transition-all ${
-                                        dailyLimit === n
-                                            ? 'border-purple-600 bg-purple-50 text-purple-700'
-                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                                    }`}
+                                    className="flex flex-col items-center py-3 rounded-xl border-2 transition-all"
+                                    style={{
+                                        borderColor: dailyLimit === n ? 'var(--purple-primary)' : 'var(--border-subtle)',
+                                        background: dailyLimit === n ? 'rgba(198,120,221,0.1)' : 'transparent',
+                                        color: dailyLimit === n ? 'var(--purple-light)' : 'var(--text-secondary)'
+                                    }}
                                 >
                                     <span className="text-lg font-bold">{n}</span>
                                     <span className="text-[10px] mt-0.5">
@@ -240,14 +243,15 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                             ))}
                         </div>
 
-                        <p className="text-xs text-gray-400 text-center mb-6">
+                        <p className="text-xs text-center mb-6" style={{ color: 'var(--text-tertiary)' }}>
                             This is your peak-day limit. Rest phases will automatically scale down.
                         </p>
 
                         <button
                             onClick={handleDailyLimitSave}
                             disabled={loading}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))' }}
                         >
                             {loading ? 'Saving...' : 'Save & Continue →'}
                         </button>
@@ -258,31 +262,33 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 {step === 'complete' && (
                     <div className="text-center">
                         <div className="text-5xl mb-4">✨</div>
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-3">You're All Set!</h2>
-                        <p className="text-gray-600 mb-6 leading-relaxed">
+                        <h2 className="text-2xl font-serif italic mb-3" style={{ color: 'var(--text-primary)' }}>You're All Set!</h2>
+                        <p className="mb-6 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                             Your cycle data is ready. Tasks will now be automatically scheduled at your best energy moments.
                         </p>
-                        <div className="text-left bg-gray-50 rounded-xl p-4 mb-8 space-y-2 text-sm text-gray-700">
+                        <div className="text-left rounded-xl p-4 mb-8 space-y-2 text-sm"
+                             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
                             <div className="flex items-center gap-2">
                                 <span className="text-base">🔴</span>
-                                <span><strong>Menstrual</strong> — light, restful tasks</span>
+                                <span><strong style={{ color: 'var(--text-primary)' }}>Menstrual</strong> — light, restful tasks</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-base">🟠</span>
-                                <span><strong>Follicular</strong> — planning, steady progress</span>
+                                <span><strong style={{ color: 'var(--text-primary)' }}>Follicular</strong> — planning, steady progress</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-base">🟣</span>
-                                <span><strong>Ovulation</strong> — high-energy, creative work</span>
+                                <span><strong style={{ color: 'var(--text-primary)' }}>Ovulation</strong> — high-energy, creative work</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-base">⬜</span>
-                                <span><strong>Luteal</strong> — wrap up, detail work</span>
+                                <span><strong style={{ color: 'var(--text-primary)' }}>Luteal</strong> — wrap up, detail work</span>
                             </div>
                         </div>
                         <button
                             onClick={onComplete}
-                            className="w-full px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
+                            style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))', boxShadow: '0 2px 12px var(--purple-glow)' }}
                         >
                             Start Adding Tasks
                         </button>
