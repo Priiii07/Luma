@@ -10,7 +10,7 @@ function Legend() {
         <div
             className="flex gap-6 px-6 py-4 flex-wrap"
             style={{
-                background: 'rgba(255,255,255,0.02)',
+                background: 'var(--surface-1)',
                 borderBottom: '1px solid var(--border-subtle)'
             }}
         >

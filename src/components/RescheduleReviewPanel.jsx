@@ -148,7 +148,7 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                     className="p-4 rounded-xl transition-colors"
                                     style={{
                                         border: `1px solid ${accepted.has(s.task.id) ? 'rgba(74,222,128,0.4)' : rejected.has(s.task.id) ? 'var(--border-subtle)' : 'var(--border-subtle)'}`,
-                                        background: accepted.has(s.task.id) ? 'rgba(74,222,128,0.08)' : rejected.has(s.task.id) ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)',
+                                        background: accepted.has(s.task.id) ? 'rgba(74,222,128,0.08)' : rejected.has(s.task.id) ? 'var(--surface-1)' : 'var(--surface-1)',
                                         opacity: rejected.has(s.task.id) ? 0.5 : 1
                                     }}
                                 >
@@ -169,7 +169,7 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                             onClick={() => toggleAccept(s.task.id)}
                                             className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                             style={{
-                                                background: accepted.has(s.task.id) ? '#4ade80' : 'rgba(255,255,255,0.05)',
+                                                background: accepted.has(s.task.id) ? '#4ade80' : 'var(--surface-2)',
                                                 color: accepted.has(s.task.id) ? '#000' : 'var(--text-secondary)'
                                             }}
                                         >
@@ -179,7 +179,7 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                             onClick={() => toggleReject(s.task.id)}
                                             className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                             style={{
-                                                background: rejected.has(s.task.id) ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+                                                background: rejected.has(s.task.id) ? 'var(--border-medium)' : 'var(--surface-2)',
                                                 color: 'var(--text-secondary)'
                                             }}
                                         >
@@ -200,7 +200,7 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                     </p>
                                     {group.candidates.map((c, ci) => (
                                         <div key={ci} className="p-3 mb-2 rounded-xl flex items-start gap-3"
-                                             style={{ border: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.03)' }}>
+                                             style={{ border: '1px solid var(--border-subtle)', background: 'var(--surface-1)' }}>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{c.task.name}</p>
                                                 <p className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
@@ -242,7 +242,7 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
                                 onClick={handleApplyAll}
                                 disabled={loading}
                                 className="flex-1 py-2.5 text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
-                                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}
+                                style={{ background: 'var(--surface-2)', color: 'var(--text-primary)' }}
                             >
                                 Apply All
                             </button>

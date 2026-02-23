@@ -3,8 +3,9 @@ import { format, parseISO } from 'date-fns'
 import DatePicker from 'react-datepicker'
 import { logCycle, updateAllCycleLengths } from '../../utils/storageHelpers'
 import { loadUserPreferences, saveUserPreferences } from '../../store/userPreferences'
+import ThemeSelector from './ThemeSelector'
 
-const STEPS = ['welcome', 'first_period', 'second_period', 'daily_limit', 'complete']
+const STEPS = ['welcome', 'theme_selection', 'first_period', 'second_period', 'daily_limit', 'complete']
 
 function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
     const initialStep = cyclesLogged === 0 ? 'welcome'
@@ -148,7 +149,7 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                                 width: i === stepIndex ? '24px' : '8px',
                                 background: i === stepIndex ? 'var(--purple-primary)'
                                     : i < stepIndex ? 'var(--purple-dark)'
-                                    : 'rgba(255,255,255,0.1)'
+                                    : 'var(--border-subtle)'
                             }}
                         />
                     ))}
@@ -167,13 +168,18 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                             To get started, log your <strong>2 most recent periods</strong>. This lets us calculate your cycle length and phase patterns.
                         </p>
                         <button
-                            onClick={() => setStep('first_period')}
+                            onClick={() => setStep('theme_selection')}
                             className="w-full px-5 py-2.5 text-white rounded-lg text-sm font-medium transition-colors"
                             style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))', boxShadow: '0 2px 12px var(--purple-glow)' }}
                         >
                             Get Started →
                         </button>
                     </div>
+                )}
+
+                {/* Step: Theme Selection */}
+                {step === 'theme_selection' && (
+                    <ThemeSelector onSelect={() => setStep('first_period')} />
                 )}
 
                 {/* Step: First period */}
@@ -267,7 +273,7 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                             Your cycle data is ready. Tasks will now be automatically scheduled at your best energy moments.
                         </p>
                         <div className="text-left rounded-xl p-4 mb-8 space-y-2 text-sm"
-                             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                             style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
                             <div className="flex items-center gap-2">
                                 <span className="text-base">🔴</span>
                                 <span><strong style={{ color: 'var(--text-primary)' }}>Menstrual</strong> — light, restful tasks</span>

@@ -162,7 +162,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                     value={energyLevel}
                                     onChange={e => setEnergyLevel(e.target.value)}
                                     className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}
+                                    style={{ background: 'var(--surface-2)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}
                                 >
                                     <option value="">Not set</option>
                                     <option value="low">Low Energy</option>
@@ -261,7 +261,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 <button
                                     onClick={() => setConfirmDelete(false)}
                                     className="flex-1 py-2.5 text-sm font-medium rounded-xl"
-                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                                    style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -279,7 +279,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 <button
                                     onClick={() => setEditing(false)}
                                     className="flex-1 py-2.5 text-sm font-medium rounded-xl"
-                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                                    style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -299,7 +299,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 <button
                                     onClick={() => setEditing(true)}
                                     className="flex-1 py-2.5 text-sm font-medium rounded-xl"
-                                    style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                                    style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                                 >
                                     Edit
                                 </button>
