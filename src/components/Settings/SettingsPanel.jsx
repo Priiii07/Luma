@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { saveUserPreferences } from '../../store/userPreferences'
 import { exportData, importData, clearAllData } from '../../utils/storageHelpers'
+import { useTheme } from '../../contexts/ThemeContext'
 
 /**
  * Slide-in settings sidebar.
  */
 function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onDataCleared, onDataImported }) {
+    const { theme, updateTheme } = useTheme()
     const [clearStep, setClearStep] = useState(0)
     const [importStatus, setImportStatus] = useState(null)
 
@@ -114,6 +116,31 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
 
                 <div className="px-6 py-6 space-y-8">
 
+                    {/* ── Appearance ── */}
+                    <div>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
+                            style={{ color: 'var(--purple-primary)' }}>
+                            Appearance
+                        </h4>
+                        <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Choose between dark and light mode
+                        </p>
+                        <div className="theme-toggle">
+                            <button
+                                onClick={() => updateTheme('dark')}
+                                className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                            >
+                                🌙 Dark
+                            </button>
+                            <button
+                                onClick={() => updateTheme('light')}
+                                className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                            >
+                                ☀️ Light
+                            </button>
+                        </div>
+                    </div>
+
                     {/* ── Daily Task Limit ── */}
                     <div>
                         <h4 className="text-xs font-semibold uppercase tracking-wider mb-1"
@@ -209,7 +236,7 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                                         <button
                                             onClick={() => update(item.key, !checked)}
                                             className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none"
-                                            style={{ background: checked ? 'var(--purple-primary)' : 'rgba(255,255,255,0.15)' }}
+                                            style={{ background: checked ? 'var(--purple-primary)' : 'var(--toggle-off)' }}
                                             role="switch"
                                             aria-checked={checked}
                                         >

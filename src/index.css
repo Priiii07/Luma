@@ -5,46 +5,154 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Custom Properties ── */
+/* ═══════════════════════════════════════════════════════
+   DUAL THEME SYSTEM — Dark (Ember Enhanced) + Light
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Base properties (shared across themes) ── */
 :root {
-  --bg-primary: #0d0d12;
-  --bg-secondary: #1a1a1f;
-  --bg-tertiary: rgba(255,255,255,0.04);
-
-  --text-primary: #f0eee8;
-  --text-secondary: rgba(240,238,232,0.6);
-  --text-tertiary: rgba(240,238,232,0.35);
-
-  --border-subtle: rgba(255,255,255,0.08);
-  --border-medium: rgba(255,255,255,0.15);
-  --border-strong: rgba(255,255,255,0.25);
-
-  --purple-primary: #c678dd;
-  --purple-dark: #9b4db0;
-  --purple-light: #d088ed;
-  --purple-glow: rgba(198,120,221,0.3);
-
-  --terracotta: #dc643c;
-  --terracotta-glow: rgba(220,100,60,0.2);
-
-  --phase-menstrual: rgba(200,60,80,0.2);
-  --phase-menstrual-border: rgba(200,60,80,0.4);
-  --phase-follicular: rgba(210,140,40,0.18);
-  --phase-follicular-border: rgba(210,140,40,0.35);
-  --phase-ovulation: rgba(160,70,220,0.22);
-  --phase-ovulation-border: rgba(160,70,220,0.45);
-  --phase-luteal: rgba(100,100,130,0.18);
-  --phase-luteal-border: rgba(100,100,130,0.3);
-
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.6;
   font-weight: 400;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── DARK THEME (Enhanced Ember) ── */
+:root,
+[data-theme="dark"] {
+  --bg-primary: #0d0d12;
+  --bg-secondary: #1a1a1f;
+  --bg-tertiary: rgba(255,255,255,0.06);
+
+  --text-primary: #f0eee8;
+  --text-secondary: rgba(240,238,232,0.7);
+  --text-tertiary: rgba(240,238,232,0.45);
+
+  --border-subtle: rgba(255,255,255,0.12);
+  --border-medium: rgba(255,255,255,0.2);
+  --border-strong: rgba(255,255,255,0.35);
+
+  --purple-primary: #d688f0;
+  --purple-dark: #b85ad8;
+  --purple-light: #e5a0ff;
+  --purple-glow: rgba(214,136,240,0.4);
+
+  --terracotta: #ff7854;
+  --terracotta-dark: #e65530;
+  --terracotta-glow: rgba(255,120,84,0.3);
+
+  /* Phase colors — vibrant with glow */
+  --phase-menstrual: rgba(255,80,120,0.28);
+  --phase-menstrual-border: rgba(255,80,120,0.55);
+  --phase-menstrual-glow: rgba(255,80,120,0.25);
+  --phase-menstrual-text: #ff5088;
+
+  --phase-follicular: rgba(255,160,60,0.3);
+  --phase-follicular-border: rgba(255,160,60,0.6);
+  --phase-follicular-glow: rgba(255,160,60,0.25);
+  --phase-follicular-text: #ffa03c;
+
+  --phase-ovulation: rgba(180,100,255,0.32);
+  --phase-ovulation-border: rgba(180,100,255,0.65);
+  --phase-ovulation-glow: rgba(180,100,255,0.3);
+  --phase-ovulation-text: #b464ff;
+
+  --phase-luteal: rgba(120,140,180,0.28);
+  --phase-luteal-border: rgba(120,140,180,0.5);
+  --phase-luteal-glow: rgba(120,140,180,0.2);
+  --phase-luteal-text: #788cb4;
+
+  --success: #5aeb8c;
+  --warning: #ffd24d;
+  --error: #ff5c5c;
+  --info: #70b5ff;
+
+  /* Surface levels for cards, chips, hover states */
+  --surface-1: rgba(255,255,255,0.03);
+  --surface-2: rgba(255,255,255,0.06);
+  --surface-3: rgba(255,255,255,0.1);
+  --surface-hover: rgba(255,255,255,0.08);
+  --toggle-off: rgba(255,255,255,0.15);
+
+  /* Header gradient */
+  --header-bg: linear-gradient(135deg, rgba(198,120,221,0.15), rgba(220,100,60,0.08));
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255,255,255,0.1);
+  --scrollbar-thumb-hover: rgba(255,255,255,0.2);
+
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f0f2f5;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: rgba(0,0,0,0.65);
+  --text-tertiary: rgba(0,0,0,0.4);
+
+  --border-subtle: rgba(0,0,0,0.08);
+  --border-medium: rgba(0,0,0,0.12);
+  --border-strong: rgba(0,0,0,0.2);
+
+  --purple-primary: #7c3aed;
+  --purple-dark: #5b21b6;
+  --purple-light: #a78bfa;
+  --purple-glow: rgba(124,58,237,0.2);
+
+  --terracotta: #ea580c;
+  --terracotta-dark: #c2410c;
+  --terracotta-glow: rgba(234,88,12,0.15);
+
+  /* Phase colors — vivid & saturated */
+  --phase-menstrual: #fee2e2;
+  --phase-menstrual-border: #fca5a5;
+  --phase-menstrual-glow: transparent;
+  --phase-menstrual-text: #dc2626;
+
+  --phase-follicular: #ffedd5;
+  --phase-follicular-border: #fdba74;
+  --phase-follicular-glow: transparent;
+  --phase-follicular-text: #ea580c;
+
+  --phase-ovulation: #ede9fe;
+  --phase-ovulation-border: #c4b5fd;
+  --phase-ovulation-glow: transparent;
+  --phase-ovulation-text: #7c3aed;
+
+  --phase-luteal: #f3f4f6;
+  --phase-luteal-border: #d1d5db;
+  --phase-luteal-glow: transparent;
+  --phase-luteal-text: #4b5563;
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Surface levels */
+  --surface-1: rgba(0,0,0,0.02);
+  --surface-2: rgba(0,0,0,0.04);
+  --surface-3: rgba(0,0,0,0.06);
+  --surface-hover: rgba(0,0,0,0.05);
+  --toggle-off: rgba(0,0,0,0.15);
+
+  /* Header gradient */
+  --header-bg: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(234,88,12,0.04));
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0,0,0,0.12);
+  --scrollbar-thumb-hover: rgba(0,0,0,0.25);
+
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
 }
 
 body {
@@ -64,7 +172,7 @@ button {
   cursor: pointer;
 }
 
-/* ── Ambient Background Orbs ── */
+/* ── Ambient Background Orbs (dark only) ── */
 .ember-bg {
   position: fixed;
   inset: 0;
@@ -79,7 +187,7 @@ button {
   right: -100px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(180,80,200,0.12) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(214,136,240,0.18) 0%, rgba(180,100,255,0.12) 40%, transparent 70%);
   border-radius: 50%;
   animation: ember-float-1 20s ease-in-out infinite;
 }
@@ -90,9 +198,14 @@ button {
   left: -200px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(220,100,60,0.08) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(255,120,84,0.15) 0%, rgba(255,160,60,0.08) 40%, transparent 70%);
   border-radius: 50%;
   animation: ember-float-2 25s ease-in-out infinite;
+}
+
+/* Hide orbs in light mode */
+[data-theme="light"] .ember-bg {
+  display: none;
 }
 
 @keyframes ember-float-1 {
@@ -116,7 +229,7 @@ button {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── react-datepicker dark theme ── */
+/* ── react-datepicker theme ── */
 .react-datepicker-wrapper {
   width: 100%;
 }
@@ -133,6 +246,9 @@ button {
   background-color: rgba(198,120,221,0.1) !important;
   border-bottom-color: var(--border-subtle) !important;
 }
+[data-theme="light"] .react-datepicker__header {
+  background-color: rgba(124,58,237,0.06) !important;
+}
 .react-datepicker__current-month,
 .react-datepicker__day-name {
   color: var(--purple-primary) !important;
@@ -142,6 +258,9 @@ button {
 }
 .react-datepicker__day:hover {
   background-color: rgba(198,120,221,0.15) !important;
+}
+[data-theme="light"] .react-datepicker__day:hover {
+  background-color: rgba(124,58,237,0.1) !important;
 }
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
@@ -164,7 +283,7 @@ button {
   display: none;
 }
 
-/* ── Dark form inputs ── */
+/* ── Form inputs ── */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -172,7 +291,7 @@ input[type="number"],
 input[type="date"],
 select,
 textarea {
-  background: rgba(255,255,255,0.05);
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-medium);
   color: var(--text-primary);
   border-radius: 0.375rem;
@@ -207,7 +326,13 @@ input[type="checkbox"] {
   filter: brightness(1.15);
 }
 
-/* ── Scrollbar styling (dark) ── */
+/* Light mode: no brightness filter, use subtle shadow instead */
+[data-theme="light"] .hover\:brightness-110:hover {
+  filter: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Scrollbar styling ── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -215,9 +340,155 @@ input[type="checkbox"] {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.2);
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME SELECTOR (onboarding + settings)
+   ═══════════════════════════════════════════════════════ */
+
+/* Theme preview mini-windows */
+.theme-preview {
+  border-radius: 8px;
+  padding: 8px;
+  overflow: hidden;
+  aspect-ratio: 16/10;
+}
+
+.theme-preview.dark-preview {
+  background: #1a1a1f;
+}
+
+.theme-preview.light-preview {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.preview-header {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.preview-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.preview-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+}
+
+.light-preview .preview-dots span {
+  background: rgba(0,0,0,0.2);
+}
+
+.preview-content {
+  position: relative;
+  height: calc(100% - 28px);
+  padding: 8px;
+}
+
+.preview-calendar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  height: 100%;
+}
+
+.preview-day {
+  border-radius: 4px;
+}
+
+/* Dark preview phase colors */
+.dark-preview .preview-day.menstrual {
+  background: rgba(255,80,120,0.28);
+  border: 1px solid rgba(255,80,120,0.55);
+}
+.dark-preview .preview-day.follicular {
+  background: rgba(255,160,60,0.3);
+  border: 1px solid rgba(255,160,60,0.6);
+}
+.dark-preview .preview-day.ovulation {
+  background: rgba(180,100,255,0.32);
+  border: 1px solid rgba(180,100,255,0.65);
+}
+.dark-preview .preview-day.luteal {
+  background: rgba(120,140,180,0.28);
+  border: 1px solid rgba(120,140,180,0.5);
+}
+
+/* Light preview phase colors */
+.light-preview .preview-day.menstrual {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+.light-preview .preview-day.follicular {
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+}
+.light-preview .preview-day.ovulation {
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+}
+.light-preview .preview-day.luteal {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+}
+
+/* Glowing orb in dark preview */
+.preview-orb {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(180,100,255,0.3), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.light-preview .preview-orb {
+  display: none;
+}
+
+/* Theme toggle in settings */
+.theme-toggle {
+  display: inline-flex;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.theme-toggle-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.theme-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.theme-toggle-btn.active {
+  background: var(--purple-primary);
+  color: white;
 }

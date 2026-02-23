@@ -9,7 +9,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     onClick={onPrevMonth}
                     className="px-2 py-1 rounded text-xl transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                     ‹
@@ -21,7 +21,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     onClick={onNextMonth}
                     className="px-2 py-1 rounded text-xl transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                     ›
@@ -33,7 +33,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     onClick={onOpenSettings}
                     className="p-2 rounded-lg transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     title="Settings"
                     aria-label="Open settings"
@@ -45,12 +45,12 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     onClick={onLogPeriod}
                     className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
                     style={{
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'var(--surface-2)',
                         border: '1px solid var(--border-medium)',
                         color: 'var(--text-primary)'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-3)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
                 >
                     📅 Log Period
                 </button>
@@ -72,7 +72,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                             disabled
                             className="px-5 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed"
                             style={{
-                                background: 'rgba(255,255,255,0.04)',
+                                background: 'var(--surface-1)',
                                 color: 'var(--text-tertiary)'
                             }}
                         >

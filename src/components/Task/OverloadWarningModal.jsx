@@ -57,14 +57,14 @@ function OverloadWarningModal({
                                             key={alt.date}
                                             onClick={() => onUseAlternative(alt.date)}
                                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-left"
-                                            style={{ border: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.03)' }}
+                                            style={{ border: '1px solid var(--border-subtle)', background: 'var(--surface-1)' }}
                                             onMouseEnter={e => {
                                                 e.currentTarget.style.borderColor = 'var(--purple-primary)'
                                                 e.currentTarget.style.background = 'rgba(198,120,221,0.08)'
                                             }}
                                             onMouseLeave={e => {
                                                 e.currentTarget.style.borderColor = 'var(--border-subtle)'
-                                                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                                                e.currentTarget.style.background = 'var(--surface-1)'
                                             }}
                                         >
                                             <div>
@@ -103,7 +103,7 @@ function OverloadWarningModal({
                         <button
                             onClick={onCancel}
                             className="w-full py-2.5 text-sm font-medium rounded-xl transition-colors"
-                            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+                            style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                         >
                             Cancel
                         </button>

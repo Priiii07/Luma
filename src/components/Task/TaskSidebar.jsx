@@ -133,7 +133,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                                 onChange={(e) => setTaskName(e.target.value)}
                                 className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: 'var(--surface-2)',
                                     border: '1px solid var(--border-medium)',
                                     color: 'var(--text-primary)'
                                 }}
@@ -149,7 +149,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                                 onChange={(e) => setEnergyLevel(e.target.value)}
                                 className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
+                                    background: 'var(--surface-2)',
                                     border: '1px solid var(--border-medium)',
                                     color: 'var(--text-primary)'
                                 }}

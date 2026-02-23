@@ -41,8 +41,8 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                     className="inline-block font-semibold text-sm mb-1 px-2 py-1 rounded"
                     style={{
                         color: 'var(--text-primary)',
-                        background: isToday ? 'rgba(255,255,255,0.1)' : (tasks && tasks.length > 0 ? 'rgba(255,255,255,0.08)' : 'transparent'),
-                        border: tasks && tasks.length > 0 ? '1px solid rgba(255,255,255,0.15)' : 'none'
+                        background: isToday ? 'var(--surface-3)' : (tasks && tasks.length > 0 ? 'var(--surface-hover)' : 'transparent'),
+                        border: tasks && tasks.length > 0 ? '1px solid var(--border-medium)' : 'none'
                     }}
                 >
                     {date}
@@ -59,17 +59,17 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                                 ${task.completed ? 'line-through opacity-60' : ''}
                             `}
                             style={{
-                                background: 'rgba(255,255,255,0.06)',
+                                background: 'var(--surface-2)',
                                 color: 'var(--text-primary)',
                                 borderLeft: `3px solid ${energyColors[task.energyLevel] || 'rgba(255,255,255,0.2)'}`,
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
                             }}
                             onMouseEnter={e => {
-                                e.currentTarget.style.background = 'rgba(198,120,221,0.15)'
+                                e.currentTarget.style.background = 'var(--purple-glow)'
                                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
                             }}
                             onMouseLeave={e => {
-                                e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                                e.currentTarget.style.background = 'var(--surface-2)'
                                 e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)'
                             }}
                         >

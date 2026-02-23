@@ -121,7 +121,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                                     type="button"
                                     onClick={() => setDuplicateWarning(null)}
                                     className="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors"
-                                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)' }}
+                                    style={{ background: 'var(--surface-2)', border: '1px solid var(--border-medium)', color: 'var(--text-secondary)' }}
                                 >
                                     Cancel
                                 </button>
@@ -182,7 +182,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
                         {/* Cycle Stats */}
                         {cycleStats && cycleStats.totalCyclesLogged > 0 && (
                             <div className="mt-6 p-4 rounded-lg"
-                                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}>
+                                 style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
                                 <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                                     Your Cycle Stats
                                 </div>

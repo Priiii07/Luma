@@ -16,7 +16,7 @@ function Header({ currentPhase, cycleDay }) {
         <div
             className="px-6 py-6"
             style={{
-                background: 'linear-gradient(135deg, rgba(198,120,221,0.15), rgba(220,100,60,0.08))',
+                background: 'var(--header-bg)',
                 borderBottom: '1px solid var(--border-subtle)',
                 backdropFilter: 'blur(20px)'
             }}
@@ -40,7 +40,7 @@ function Header({ currentPhase, cycleDay }) {
                 <div
                     className="flex items-center gap-3 px-4 py-2 rounded-full text-sm"
                     style={{
-                        background: 'rgba(255,255,255,0.06)',
+                        background: 'var(--surface-2)',
                         border: '1px solid var(--border-subtle)',
                         color: 'var(--text-secondary)'
                     }}
