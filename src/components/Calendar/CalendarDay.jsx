@@ -73,7 +73,7 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                                 e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)'
                             }}
                         >
-                            {task.name}
+                            {task.recurringDefinitionId ? <span className="opacity-60 mr-0.5">🔁</span> : null}{task.name}
                         </div>
                     </DraggableTask>
                 ))}

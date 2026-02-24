@@ -4,15 +4,28 @@ import { loadUserPreferences, saveUserPreferences } from '../store/userPreferenc
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('dark')
+    const [theme, setTheme] = useState(() => {
+        // Instant: apply cached theme from localStorage to avoid flash
+        const cached = localStorage.getItem('theme')
+        if (cached) {
+            document.documentElement.setAttribute('data-theme', cached)
+            return cached
+        }
+        return 'dark'
+    })
 
-    // Load theme from userPreferences on mount
+    // Load authoritative theme from Firestore
     useEffect(() => {
         async function init() {
-            const prefs = await loadUserPreferences()
-            const savedTheme = prefs.theme || 'dark'
-            setTheme(savedTheme)
-            document.documentElement.setAttribute('data-theme', savedTheme)
+            try {
+                const prefs = await loadUserPreferences()
+                const savedTheme = prefs.theme || 'dark'
+                setTheme(savedTheme)
+                document.documentElement.setAttribute('data-theme', savedTheme)
+                localStorage.setItem('theme', savedTheme)
+            } catch {
+                // If not authenticated yet, keep cached/default theme
+            }
         }
         init()
     }, [])
@@ -20,8 +33,8 @@ export function ThemeProvider({ children }) {
     const updateTheme = async (newTheme) => {
         setTheme(newTheme)
         document.documentElement.setAttribute('data-theme', newTheme)
+        localStorage.setItem('theme', newTheme)
 
-        // Persist to IndexedDB alongside other preferences
         const prefs = await loadUserPreferences()
         await saveUserPreferences({ ...prefs, theme: newTheme })
     }
