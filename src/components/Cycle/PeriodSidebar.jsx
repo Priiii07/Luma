@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import DatePicker from 'react-datepicker'
-import { logCycle, updateAllCycleLengths, getCycleStats, db } from '../../utils/storageHelpers'
+import { logCycle, updateAllCycleLengths, getCycleStats, deleteCycle } from '../../utils/storageHelpers'
 
 function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
     const [startDate, setStartDate] = useState(new Date())
@@ -61,7 +61,7 @@ function PeriodSidebar({ isOpen, onClose, onCycleLogged, cycles = [] }) {
 
     const handleConfirmReplace = async () => {
         if (duplicateWarning?.id) {
-            await db.cycles.delete(duplicateWarning.id)
+            await deleteCycle(duplicateWarning.id)
         }
         await saveCycle()
     }

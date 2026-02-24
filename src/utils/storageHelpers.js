@@ -1,34 +1,41 @@
-import Dexie from 'dexie'
+import { firestore } from '../firebase'
+import {
+    collection, doc, addDoc, getDoc, getDocs,
+    updateDoc, deleteDoc, setDoc, query, where, orderBy, writeBatch, limit,
+    onSnapshot
+} from 'firebase/firestore'
 
-// Initialize Dexie database
-export const db = new Dexie('CyclePlannerDB')
+// Module-level userId set by AuthContext after login
+let currentUserId = null
 
-// Define database schema
-db.version(1).stores({
-    // Tasks table
-    tasks: '++id, name, deadline, energyLevel, completedAt, createdAt',
+export function setCurrentUserId(uid) {
+    currentUserId = uid
+}
 
-    // Cycle periods table (logged menstrual periods)
-    cycles: '++id, startDate, endDate, createdAt',
+// Helper to get user-scoped collection reference
+function userCol(collectionName) {
+    if (!currentUserId) throw new Error('No authenticated user')
+    return collection(firestore, 'users', currentUserId, collectionName)
+}
 
-    // Task history for tracking changes
-    taskHistory: '++id, taskId, action, timestamp',
+// Helper to get user-scoped document reference
+function userDoc(collectionName, docId) {
+    if (!currentUserId) throw new Error('No authenticated user')
+    return doc(firestore, 'users', currentUserId, collectionName, String(docId))
+}
 
-    // User settings
-    settings: 'key, value'
-})
+// Helper for the single preferences document
+function preferencesDoc() {
+    if (!currentUserId) throw new Error('No authenticated user')
+    return doc(firestore, 'users', currentUserId, 'preferences', 'settings')
+}
 
 // ==================== TASKS ====================
 
 /**
  * Create a new task
  * @param {Object} task - Task object
- * @param {string} task.name - Task name (required)
- * @param {string} [task.deadline] - Deadline date (ISO string)
- * @param {Array<string>} [task.preferredDays] - Array of preferred days ['Mon', 'Tue', etc.]
- * @param {string} [task.energyLevel] - Energy level: 'low', 'medium', 'high'
- * @param {string} [task.scheduledDate] - Auto-assigned scheduled date (ISO string)
- * @returns {Promise<number>} Task ID
+ * @returns {Promise<string>} Task ID
  */
 export async function createTask(task) {
     const taskData = {
@@ -39,15 +46,16 @@ export async function createTask(task) {
         scheduledDate: task.scheduledDate || null,
         completed: false,
         completedAt: null,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        autoScheduled: task.autoScheduled !== undefined ? task.autoScheduled : false,
+        recurringDefinitionId: task.recurringDefinitionId || null,
+        instanceNumber: task.instanceNumber || null,
+        instanceStatus: task.instanceStatus || null
     }
 
-    const taskId = await db.tasks.add(taskData)
-
-    // Log creation in history
-    await logTaskHistory(taskId, 'created', { taskData })
-
-    return taskId
+    const docRef = await addDoc(userCol('tasks'), taskData)
+    await logTaskHistory(docRef.id, 'created', { taskData })
+    return docRef.id
 }
 
 /**
@@ -55,7 +63,8 @@ export async function createTask(task) {
  * @returns {Promise<Array>} All tasks
  */
 export async function getAllTasks() {
-    return await db.tasks.toArray()
+    const snapshot = await getDocs(userCol('tasks'))
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /**
@@ -63,7 +72,9 @@ export async function getAllTasks() {
  * @returns {Promise<Array>} Incomplete tasks
  */
 export async function getIncompleteTasks() {
-    return await db.tasks.where('completed').equals(false).toArray()
+    const q = query(userCol('tasks'), where('completed', '==', false))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /**
@@ -72,60 +83,57 @@ export async function getIncompleteTasks() {
  * @returns {Promise<Array>} Tasks scheduled for that date
  */
 export async function getTasksByDate(date) {
-    return await db.tasks.where('scheduledDate').equals(date).toArray()
+    const q = query(userCol('tasks'), where('scheduledDate', '==', date))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /**
  * Update a task
- * @param {number} taskId - Task ID
+ * @param {string|number} taskId - Task ID
  * @param {Object} updates - Fields to update
  * @returns {Promise<number>} Number of updated records
  */
 export async function updateTask(taskId, updates) {
-    const result = await db.tasks.update(taskId, updates)
-
-    // Log update in history
+    await updateDoc(userDoc('tasks', taskId), updates)
     await logTaskHistory(taskId, 'updated', { updates })
-
-    return result
+    return 1
 }
 
 /**
  * Mark task as complete
- * @param {number} taskId - Task ID
+ * @param {string|number} taskId - Task ID
  * @returns {Promise<number>} Number of updated records
  */
 export async function completeTask(taskId) {
-    const result = await db.tasks.update(taskId, {
+    await updateDoc(userDoc('tasks', taskId), {
         completed: true,
         completedAt: new Date().toISOString()
     })
-
     await logTaskHistory(taskId, 'completed')
-
-    return result
+    return 1
 }
 
 /**
  * Delete a task
- * @param {number} taskId - Task ID
+ * @param {string|number} taskId - Task ID
  * @returns {Promise<void>}
  */
 export async function deleteTask(taskId) {
     await logTaskHistory(taskId, 'deleted')
-    await db.tasks.delete(taskId)
+    await deleteDoc(userDoc('tasks', taskId))
 }
 
 /**
  * Split a task into smaller tasks
- * @param {number} taskId - Original task ID
+ * @param {string|number} taskId - Original task ID
  * @param {Array<Object>} newTasks - Array of new task objects
- * @returns {Promise<Array<number>>} Array of new task IDs
+ * @returns {Promise<Array<string>>} Array of new task IDs
  */
 export async function splitTask(taskId, newTasks) {
-    const originalTask = await db.tasks.get(taskId)
+    const snap = await getDoc(userDoc('tasks', taskId))
+    const originalTask = { id: snap.id, ...snap.data() }
 
-    // Create new tasks
     const newTaskIds = []
     for (const task of newTasks) {
         const id = await createTask({
@@ -136,10 +144,8 @@ export async function splitTask(taskId, newTasks) {
         newTaskIds.push(id)
     }
 
-    // Mark original as completed
     await completeTask(taskId)
     await logTaskHistory(taskId, 'split', { newTaskIds })
-
     return newTaskIds
 }
 
@@ -147,7 +153,6 @@ export async function splitTask(taskId, newTasks) {
 
 /**
  * Remove cycles that overlap with a new period
- * Uses proper date range overlap detection to ensure user entries always replace predictions
  * @param {string} newStartDate - New period start date (YYYY-MM-DD)
  * @param {string} [newEndDate] - New period end date (YYYY-MM-DD, optional)
  * @returns {Promise<number>} Number of cycles removed
@@ -156,40 +161,32 @@ export async function removeOverlappingCycles(newStartDate, newEndDate = null) {
     const { parseISO, addDays } = await import('date-fns')
     const newStart = parseISO(newStartDate)
 
-    // Calculate end date for overlap checking
     let newEnd = newStart
     if (newEndDate) {
         newEnd = parseISO(newEndDate)
     } else {
-        // If no end date provided, assume 7 days (conservative estimate)
         newEnd = addDays(newStart, 7)
     }
 
-    // Get all existing cycles
-    const allCycles = await db.cycles.toArray()
-
+    const allCycles = await getAllCycles()
     let removedCount = 0
 
     for (const cycle of allCycles) {
         const existingStart = parseISO(cycle.startDate)
 
-        // Determine existing cycle's end date
         let existingEnd = existingStart
         if (cycle.endDate) {
             existingEnd = parseISO(cycle.endDate)
         } else if (cycle.phases?.menstrual?.end) {
             existingEnd = parseISO(cycle.phases.menstrual.end)
         } else {
-            // Default to 5 days if no end date available
             existingEnd = addDays(existingStart, 5)
         }
 
-        // Check for ANY overlap between date ranges
-        // Ranges overlap if: (start1 <= end2) AND (end1 >= start2)
         const hasOverlap = (newStart <= existingEnd) && (newEnd >= existingStart)
 
         if (hasOverlap) {
-            await db.cycles.delete(cycle.id)
+            await deleteDoc(userDoc('cycles', cycle.id))
             removedCount++
         }
     }
@@ -202,41 +199,35 @@ export async function removeOverlappingCycles(newStartDate, newEndDate = null) {
  * @returns {Promise<Array>} Array of cycles
  */
 export async function getAllCycles() {
-    return await db.cycles.orderBy('startDate').reverse().toArray()
+    const q = query(userCol('cycles'), orderBy('startDate', 'desc'))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 /**
  * Log a new menstrual cycle period
  * @param {Object} cycle - Cycle object
- * @param {string} cycle.startDate - Start date (ISO string)
- * @param {string} [cycle.endDate] - End date (ISO string)
- * @param {number} [cycle.cycleLength] - Expected cycle length for phase calculation
- * @returns {Promise<number>} Cycle ID
+ * @returns {Promise<string>} Cycle ID
  */
 export async function logCycle(cycle) {
-    // Remove any overlapping cycles first
     await removeOverlappingCycles(cycle.startDate, cycle.endDate)
 
-    // Import cycle helpers dynamically
     const { createCycleEntry } = await import('./cycleHelpers')
-
-    // Fetch existing cycles BEFORE adding the new one so averaging works correctly
     const existingCycles = await getAllCycles()
 
-    // Create complete cycle entry with phases
     const cycleEntry = createCycleEntry(
         cycle.startDate,
         cycle.endDate || null,
         existingCycles
     )
 
-    // Store in database
     const cycleData = {
         ...cycleEntry,
         createdAt: new Date().toISOString()
     }
 
-    return await db.cycles.add(cycleData)
+    const docRef = await addDoc(userCol('cycles'), cycleData)
+    return docRef.id
 }
 
 /**
@@ -244,46 +235,45 @@ export async function logCycle(cycle) {
  * @returns {Promise<Object|undefined>} Most recent cycle
  */
 export async function getLatestCycle() {
-    return await db.cycles.orderBy('startDate').last()
+    const q = query(userCol('cycles'), orderBy('startDate', 'desc'), limit(1))
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) return undefined
+    const d = snapshot.docs[0]
+    return { id: d.id, ...d.data() }
 }
 
 /**
  * Update a cycle
- * @param {number} cycleId - Cycle ID
+ * @param {string|number} cycleId - Cycle ID
  * @param {Object} updates - Fields to update
  * @returns {Promise<number>} Number of updated records
  */
 export async function updateCycle(cycleId, updates) {
-    return await db.cycles.update(cycleId, updates)
+    await updateDoc(userDoc('cycles', cycleId), updates)
+    return 1
 }
 
 /**
  * Delete a cycle
- * @param {number} cycleId - Cycle ID
+ * @param {string|number} cycleId - Cycle ID
  * @returns {Promise<void>}
  */
 export async function deleteCycle(cycleId) {
-    await db.cycles.delete(cycleId)
+    await deleteDoc(userDoc('cycles', cycleId))
 }
 
 /**
  * Update all cycle lengths when new cycle is logged
- * Updates the cycleLength field of previous cycles
  * @returns {Promise<void>}
  */
 export async function updateAllCycleLengths() {
     const { updateCycleLengths } = await import('./cycleHelpers')
-
-    // Get all cycles
     const allCycles = await getAllCycles()
-
-    // Calculate updated cycle lengths
     const updated = updateCycleLengths(allCycles)
 
-    // Update each cycle in the database
     for (const cycle of updated) {
         if (cycle.id) {
-            await db.cycles.update(cycle.id, { cycleLength: cycle.cycleLength })
+            await updateDoc(userDoc('cycles', cycle.id), { cycleLength: cycle.cycleLength })
         }
     }
 }
@@ -298,34 +288,100 @@ export async function getCycleStats() {
     return getCycleStatistics(allCycles)
 }
 
+// ==================== RECURRING DEFINITIONS ====================
+
+/**
+ * Create a new recurring task definition
+ * @param {Object} def - Recurring definition
+ * @returns {Promise<string>} Definition ID
+ */
+export async function createRecurringDefinition(def) {
+    const data = {
+        name: def.name,
+        energyLevel: def.energyLevel || null,
+        recurrence: def.recurrence,
+        skipDuringMenstrual: def.skipDuringMenstrual || false,
+        generationWindow: def.generationWindow || 14,
+        active: true,
+        createdAt: new Date().toISOString(),
+        lastGenerated: new Date().toISOString()
+    }
+    const docRef = await addDoc(userCol('recurringDefinitions'), data)
+    return docRef.id
+}
+
+/**
+ * Get all recurring definitions
+ * @returns {Promise<Array>}
+ */
+export async function getAllRecurringDefinitions() {
+    const snapshot = await getDocs(userCol('recurringDefinitions'))
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+/**
+ * Get a single recurring definition
+ * @param {string|number} id
+ * @returns {Promise<Object|undefined>}
+ */
+export async function getRecurringDefinition(id) {
+    const snap = await getDoc(userDoc('recurringDefinitions', id))
+    if (!snap.exists()) return undefined
+    return { id: snap.id, ...snap.data() }
+}
+
+/**
+ * Update a recurring definition
+ * @param {string|number} id
+ * @param {Object} updates
+ * @returns {Promise<number>}
+ */
+export async function updateRecurringDefinition(id, updates) {
+    await updateDoc(userDoc('recurringDefinitions', id), updates)
+    return 1
+}
+
+/**
+ * Delete a recurring definition
+ * @param {string|number} id
+ * @returns {Promise<void>}
+ */
+export async function deleteRecurringDefinition(id) {
+    await deleteDoc(userDoc('recurringDefinitions', id))
+}
+
 // ==================== TASK HISTORY ====================
 
 /**
  * Log task history event
- * @param {number} taskId - Task ID
- * @param {string} action - Action type (created, updated, completed, deleted, split, rescheduled)
+ * @param {string|number} taskId - Task ID
+ * @param {string} action - Action type
  * @param {Object} [metadata] - Additional metadata
- * @returns {Promise<number>} History entry ID
+ * @returns {Promise<string>} History entry ID
  */
 export async function logTaskHistory(taskId, action, metadata = {}) {
-    return await db.taskHistory.add({
-        taskId,
+    const docRef = await addDoc(userCol('taskHistory'), {
+        taskId: String(taskId),
         action,
         metadata,
         timestamp: new Date().toISOString()
     })
+    return docRef.id
 }
 
 /**
  * Get task history
- * @param {number} taskId - Task ID
+ * @param {string|number} taskId - Task ID
  * @returns {Promise<Array>} History entries for the task
  */
 export async function getTaskHistory(taskId) {
-    return await db.taskHistory
-        .where('taskId')
-        .equals(taskId)
-        .sortBy('timestamp')
+    const q = query(
+        userCol('taskHistory'),
+        where('taskId', '==', String(taskId)),
+        orderBy('timestamp')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
 // ==================== SETTINGS ====================
@@ -337,7 +393,7 @@ export async function getTaskHistory(taskId) {
  * @returns {Promise<string>} Setting key
  */
 export async function saveSetting(key, value) {
-    await db.settings.put({ key, value })
+    await setDoc(preferencesDoc(), { [key]: value }, { merge: true })
     return key
 }
 
@@ -348,8 +404,14 @@ export async function saveSetting(key, value) {
  * @returns {Promise<any>} Setting value
  */
 export async function getSetting(key, defaultValue = null) {
-    const setting = await db.settings.get(key)
-    return setting ? setting.value : defaultValue
+    try {
+        const snap = await getDoc(preferencesDoc())
+        if (!snap.exists()) return defaultValue
+        const data = snap.data()
+        return data[key] !== undefined ? data[key] : defaultValue
+    } catch {
+        return defaultValue
+    }
 }
 
 /**
@@ -357,11 +419,12 @@ export async function getSetting(key, defaultValue = null) {
  * @returns {Promise<Object>} All settings as key-value object
  */
 export async function getAllSettings() {
-    const settings = await db.settings.toArray()
-    return settings.reduce((acc, { key, value }) => {
-        acc[key] = value
-        return acc
-    }, {})
+    try {
+        const snap = await getDoc(preferencesDoc())
+        return snap.exists() ? snap.data() : {}
+    } catch {
+        return {}
+    }
 }
 
 // ==================== UTILITIES ====================
@@ -371,10 +434,24 @@ export async function getAllSettings() {
  * @returns {Promise<void>}
  */
 export async function clearAllData() {
-    await db.tasks.clear()
-    await db.cycles.clear()
-    await db.taskHistory.clear()
-    await db.settings.clear()
+    const collections = ['tasks', 'cycles', 'taskHistory', 'recurringDefinitions']
+
+    for (const colName of collections) {
+        const snapshot = await getDocs(userCol(colName))
+        const docs = snapshot.docs
+        for (let i = 0; i < docs.length; i += 500) {
+            const batch = writeBatch(firestore)
+            const chunk = docs.slice(i, i + 500)
+            chunk.forEach(d => batch.delete(d.ref))
+            await batch.commit()
+        }
+    }
+
+    try {
+        await deleteDoc(preferencesDoc())
+    } catch {
+        // Preferences doc may not exist
+    }
 }
 
 /**
@@ -382,11 +459,15 @@ export async function clearAllData() {
  * @returns {Promise<Object>} All data
  */
 export async function exportData() {
+    const taskHistorySnapshot = await getDocs(userCol('taskHistory'))
+    const taskHistory = taskHistorySnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+
     return {
-        tasks: await db.tasks.toArray(),
-        cycles: await db.cycles.toArray(),
-        taskHistory: await db.taskHistory.toArray(),
-        settings: await db.settings.toArray()
+        tasks: await getAllTasks(),
+        cycles: await getAllCycles(),
+        taskHistory,
+        settings: await getAllSettings(),
+        recurringDefinitions: await getAllRecurringDefinitions()
     }
 }
 
@@ -396,10 +477,68 @@ export async function exportData() {
  * @returns {Promise<void>}
  */
 export async function importData(data) {
-    if (data.tasks) await db.tasks.bulkAdd(data.tasks)
-    if (data.cycles) await db.cycles.bulkAdd(data.cycles)
-    if (data.taskHistory) await db.taskHistory.bulkAdd(data.taskHistory)
-    if (data.settings) await db.settings.bulkAdd(data.settings)
+    if (data.tasks) {
+        for (const item of data.tasks) {
+            const { id, ...taskData } = item
+            await addDoc(userCol('tasks'), taskData)
+        }
+    }
+    if (data.cycles) {
+        for (const item of data.cycles) {
+            const { id, ...cycleData } = item
+            await addDoc(userCol('cycles'), cycleData)
+        }
+    }
+    if (data.taskHistory) {
+        for (const item of data.taskHistory) {
+            const { id, ...historyData } = item
+            await addDoc(userCol('taskHistory'), historyData)
+        }
+    }
+    if (data.recurringDefinitions) {
+        for (const item of data.recurringDefinitions) {
+            const { id, ...defData } = item
+            await addDoc(userCol('recurringDefinitions'), defData)
+        }
+    }
+    if (data.settings) {
+        if (Array.isArray(data.settings)) {
+            const settingsObj = data.settings.reduce((acc, { key, value }) => {
+                acc[key] = value
+                return acc
+            }, {})
+            await setDoc(preferencesDoc(), settingsObj)
+        } else {
+            await setDoc(preferencesDoc(), data.settings)
+        }
+    }
 }
 
-export default db
+// ==================== REAL-TIME SUBSCRIPTIONS ====================
+
+/**
+ * Subscribe to real-time task updates
+ * @param {Function} callback - Called with updated tasks array
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribeTasks(callback) {
+    if (!currentUserId) return () => {}
+    return onSnapshot(userCol('tasks'), (snapshot) => {
+        const tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+        callback(tasks)
+    })
+}
+
+/**
+ * Subscribe to real-time cycle updates
+ * @param {Function} callback - Called with updated cycles array
+ * @returns {Function} Unsubscribe function
+ */
+export function subscribeCycles(callback) {
+    if (!currentUserId) return () => {}
+    const q = query(userCol('cycles'), orderBy('startDate', 'desc'))
+    return onSnapshot(q, (snapshot) => {
+        const cycles = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+        callback(cycles)
+    })
+}

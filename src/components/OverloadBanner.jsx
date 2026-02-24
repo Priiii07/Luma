@@ -15,21 +15,21 @@ function OverloadBanner({ warnings = [], onDismiss }) {
 
     const configs = {
         high: {
-            bg: 'rgba(239,68,68,0.1)',
-            border: 'rgba(239,68,68,0.5)',
-            text: 'rgba(252,165,165,0.9)',
+            bg: 'var(--banner-error-bg)',
+            border: 'var(--banner-error-border)',
+            text: 'var(--banner-error-text)',
             icon: '⚠️'
         },
         medium: {
-            bg: 'rgba(251,191,36,0.1)',
-            border: 'rgba(251,191,36,0.5)',
-            text: 'rgba(253,224,71,0.9)',
+            bg: 'var(--banner-warning-bg)',
+            border: 'var(--banner-warning-border)',
+            text: 'var(--banner-warning-text)',
             icon: '⚡'
         },
         low: {
-            bg: 'rgba(96,165,250,0.1)',
-            border: 'rgba(96,165,250,0.4)',
-            text: 'rgba(147,197,253,0.9)',
+            bg: 'var(--banner-info-bg)',
+            border: 'var(--banner-info-border)',
+            text: 'var(--banner-info-text)',
             icon: '💡'
         }
     }

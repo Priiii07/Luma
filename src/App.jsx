@@ -9,6 +9,7 @@ import TaskSidebar from "./components/Task/TaskSidebar";
 import PeriodSidebar from "./components/Cycle/PeriodSidebar";
 import OnboardingFlow from "./components/Onboarding/OnboardingFlow";
 import OverloadBanner from "./components/OverloadBanner";
+import MissedInstanceBanner from "./components/MissedInstanceBanner";
 import RescheduleReviewPanel from "./components/RescheduleReviewPanel";
 import SettingsPanel from "./components/Settings/SettingsPanel";
 import TaskDetailModal from "./components/Task/TaskDetailModal";
@@ -18,12 +19,19 @@ import {
   getAllTasks,
   updateTask,
   logTaskHistory,
+  subscribeTasks,
+  subscribeCycles,
 } from "./utils/storageHelpers";
 import { getCurrentPhaseInfo } from "./utils/cycleHelpers";
 import { detectOverloadSituations } from "./utils/overloadDetector";
 import { checkAndReschedule } from "./utils/reschedulingEngine";
 import { suggestPullForward } from "./utils/optimizationEngine";
+import { checkAndRegenerateAll, handleMissedInstances, handleRecurringOnCycleUpdate } from "./utils/recurringEngine";
 import { loadUserPreferences } from "./store/userPreferences";
+import { useAuth } from "./contexts/AuthContext";
+import LoginPage from "./components/Auth/LoginPage";
+import MigrationPrompt from "./components/Auth/MigrationPrompt";
+import { hasLocalData, isMigrationComplete } from "./utils/migrationTool";
 
 // Import test function (remove in production)
 import { testStorage } from "./utils/testStorage";
@@ -34,6 +42,8 @@ if (typeof window !== "undefined") {
 }
 
 function App() {
+  const { user } = useAuth();
+
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // February 2026
   const [showTaskSidebar, setShowTaskSidebar] = useState(false);
   const [showPeriodSidebar, setShowPeriodSidebar] = useState(false);
@@ -56,44 +66,75 @@ function App() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
+  // Recurring tasks state
+  const [missedInstances, setMissedInstances] = useState([]);
+
+  // Migration state
+  const [showMigrationPrompt, setShowMigrationPrompt] = useState(false);
+
   const loadPreferences = async () => {
     const prefs = await loadUserPreferences();
     setUserPreferences(prefs);
   };
 
-  // Returns the freshly loaded cycles so callers can use them synchronously
-  const loadCycles = async () => {
-    try {
-      const allCycles = await getAllCycles();
-      setCycles(allCycles);
-      const phaseInfo = getCurrentPhaseInfo(allCycles);
-      setCurrentPhaseInfo(phaseInfo);
-      return allCycles;
-    } catch (error) {
-      console.error("Error loading cycles:", error);
-      return [];
-    }
-  };
-
-  const loadTasks = async () => {
-    try {
-      const allTasks = await getAllTasks();
-      setTasks(allTasks);
-      return allTasks;
-    } catch (error) {
-      console.error("Error loading tasks:", error);
-      return [];
-    }
-  };
-
   /* eslint-disable react-hooks/set-state-in-effect */
 
-  // Load everything on mount
+  // Set up real-time subscriptions and run initial checks when authenticated
   useEffect(() => {
-    loadCycles();
-    loadTasks();
-    loadPreferences();
-  }, []);
+    if (!user) return;
+
+    // Check for local data to migrate
+    (async () => {
+      const alreadyMigrated = await isMigrationComplete(user.uid);
+      if (!alreadyMigrated) {
+        const hasData = await hasLocalData();
+        if (hasData) {
+          setShowMigrationPrompt(true);
+        }
+      }
+    })();
+
+    // Set up real-time listeners
+    const unsubTasks = subscribeTasks((allTasks) => {
+      setTasks(allTasks);
+    });
+    const unsubCycles = subscribeCycles((allCycles) => {
+      setCycles(allCycles);
+      setCurrentPhaseInfo(getCurrentPhaseInfo(allCycles));
+    });
+
+    async function init() {
+      await loadPreferences();
+
+      // Fetch initial data for recurring task checks
+      const [loadedCycles, loadedTasks] = await Promise.all([
+        getAllCycles(),
+        getAllTasks()
+      ]);
+
+      // Run recurring task checks after initial data load
+      if (loadedCycles.length >= 2 && loadedTasks.length >= 0) {
+        try {
+          const prefs = await loadUserPreferences();
+
+          // Regenerate recurring instances if needed
+          await checkAndRegenerateAll(loadedTasks, loadedCycles, prefs);
+
+          // Check for missed recurring instances
+          const missed = await handleMissedInstances(loadedTasks);
+          setMissedInstances(missed);
+        } catch (error) {
+          console.error("Error in recurring task checks:", error);
+        }
+      }
+    }
+    init();
+
+    return () => {
+      unsubTasks();
+      unsubCycles();
+    };
+  }, [user]);
 
   // Recalculate warnings + pull-forward whenever tasks, cycles, or preferences change
   useEffect(() => {
@@ -117,10 +158,10 @@ function App() {
 
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // After a period is logged: reload data then run rescheduling check
+  // After a period is logged: run rescheduling check (onSnapshot handles state updates)
   const handleCycleLogged = async () => {
-    const newCycles = await loadCycles();
-    const currentTasks = await loadTasks();
+    const newCycles = await getAllCycles();
+    const currentTasks = await getAllTasks();
 
     if (newCycles.length < 2) return; // Need at least 2 cycles for meaningful reschedule
 
@@ -132,8 +173,6 @@ function App() {
       const result = await checkAndReschedule(currentTasks, newCycles, prefs);
 
       if (result.mode === "automatic" && result.rescheduled.length > 0) {
-        await loadTasks();
-        // Only show the toast if the notification toggle is on
         if (prefs.notifications.cycleUpdateNotifications) {
           setRescheduleNotification(result.rescheduled.length);
           setTimeout(() => setRescheduleNotification(0), 6000);
@@ -143,20 +182,22 @@ function App() {
         result.suggestions.length > 0
       ) {
         setRescheduleSuggestions(result.suggestions);
-        // showReviewPanel opens via the useEffect above
       }
+
+      // Handle recurring tasks on cycle update
+      await handleRecurringOnCycleUpdate(currentTasks, newCycles, prefs);
     } catch (error) {
       console.error("Error running reschedule check:", error);
     }
   };
 
   const handleOnboardingComplete = async () => {
-    await loadCycles();
+    // onSnapshot handles data refresh; just reload preferences
     await loadPreferences();
   };
 
   const handleTaskCreated = () => {
-    loadTasks();
+    // onSnapshot handles task refresh automatically
   };
 
   const handlePrevMonth = () => {
@@ -189,7 +230,6 @@ function App() {
         to: newDateStr,
         trigger: "manual_drag",
       });
-      await loadTasks();
     } catch (error) {
       console.error("Error moving task:", error);
     }
@@ -199,10 +239,9 @@ function App() {
     setDismissedWarnings((prev) => new Set([...prev, id]));
   };
 
-  const handleReviewPanelClosed = async () => {
+  const handleReviewPanelClosed = () => {
     setShowReviewPanel(false);
     setRescheduleSuggestions([]);
-    await loadTasks();
   };
 
   const handleDataCleared = () => {
@@ -210,19 +249,45 @@ function App() {
     setTasks([]);
     setCurrentPhaseInfo({ phase: null, cycleDay: null });
     setWarnings([]);
+    setMissedInstances([]);
     setUserPreferences(null);
     setShowSettings(false);
     loadPreferences();
   };
 
   const handleDataImported = async () => {
-    await loadCycles();
-    await loadTasks();
+    // onSnapshot handles data refresh; just reload preferences
     await loadPreferences();
+  };
+
+  const handleMissedReschedule = async (task) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    await updateTask(task.id, {
+      scheduledDate: today,
+      instanceStatus: 'active'
+    });
+    setMissedInstances(prev => prev.filter(t => t.id !== task.id));
+  };
+
+  const handleMissedDismiss = async (task) => {
+    setMissedInstances(prev => prev.filter(t => t.id !== task.id));
   };
 
   const isOnboarded = cycles.length >= 2;
   const visibleWarnings = warnings.filter((w) => !dismissedWarnings.has(w.id));
+
+  // Show login page if not authenticated
+  if (!user) return <LoginPage />;
+
+  // Show migration prompt if local data found
+  if (showMigrationPrompt) {
+    return (
+      <MigrationPrompt
+        userId={user.uid}
+        onComplete={() => setShowMigrationPrompt(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
@@ -257,10 +322,17 @@ function App() {
           onDismiss={handleDismissWarning}
         />
 
+        {/* Missed recurring task banner */}
+        <MissedInstanceBanner
+          missedInstances={missedInstances}
+          onReschedule={handleMissedReschedule}
+          onDismiss={handleMissedDismiss}
+        />
+
         {/* Auto-reschedule confirmation toast (automatic mode) */}
         {rescheduleNotification > 0 && (
           <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
-               style={{ background: 'rgba(198,120,221,0.12)', borderLeft: '4px solid var(--purple-primary)', color: 'var(--purple-light)' }}>
+               style={{ background: 'var(--banner-purple-bg)', borderLeft: '4px solid var(--banner-purple-border)', color: 'var(--banner-purple-text)' }}>
             <span>✨</span>
             <span>
               {rescheduleNotification} task
@@ -281,7 +353,7 @@ function App() {
           pullForwardSuggestions.length > 0 &&
           isOnboarded && (
             <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
-                 style={{ background: 'rgba(96,165,250,0.1)', borderLeft: '4px solid rgba(96,165,250,0.5)', color: 'rgba(147,197,253,0.9)' }}>
+                 style={{ background: 'var(--banner-info-bg)', borderLeft: '4px solid var(--banner-info-border)', color: 'var(--banner-info-text)' }}>
               <span>💡</span>
               <span>
                 You have free slots in an upcoming high-energy week. Pull
@@ -339,15 +411,18 @@ function App() {
         onClose={handleReviewPanelClosed}
         suggestions={rescheduleSuggestions}
         pullForward={pullForwardSuggestions}
-        onApplied={loadTasks}
+        onApplied={() => {/* onSnapshot handles refresh */}}
       />
 
       {/* Task detail modal */}
       <TaskDetailModal
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
-        onSaved={loadTasks}
-        onDeleted={loadTasks}
+        onSaved={() => {/* onSnapshot handles refresh */}}
+        onDeleted={() => {/* onSnapshot handles refresh */}}
+        cycles={cycles}
+        tasks={tasks}
+        userPreferences={userPreferences}
       />
 
       {/* Privacy modal */}

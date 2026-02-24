@@ -4,30 +4,30 @@ function SmartBanner({ phase }) {
     const phaseConfig = {
         menstrual: {
             message: "You're in a low energy phase. Keep today light and focus on essentials if possible.",
-            bg: 'rgba(200,60,80,0.1)',
-            border: 'rgba(200,60,80,0.5)',
-            text: 'rgba(255,150,160,0.9)',
+            bg: 'var(--banner-menstrual-bg)',
+            border: 'var(--banner-menstrual-border)',
+            text: 'var(--banner-menstrual-text)',
             icon: '🌙'
         },
         follicular: {
             message: "You're in a medium energy phase. Great time for steady progress and moderate tasks.",
-            bg: 'rgba(210,140,40,0.1)',
-            border: 'rgba(210,140,40,0.5)',
-            text: 'rgba(255,200,100,0.9)',
+            bg: 'var(--banner-follicular-bg)',
+            border: 'var(--banner-follicular-border)',
+            text: 'var(--banner-follicular-text)',
             icon: '🌱'
         },
         ovulation: {
             message: "You're in a high energy phase! Consider pulling forward some medium tasks from next week.",
-            bg: 'rgba(160,70,220,0.1)',
-            border: 'rgba(160,70,220,0.5)',
-            text: 'rgba(208,136,237,0.9)',
+            bg: 'var(--banner-ovulation-bg)',
+            border: 'var(--banner-ovulation-border)',
+            text: 'var(--banner-ovulation-text)',
             icon: '⚡'
         },
         luteal: {
             message: "You're in a prep phase. Consider finishing open tasks and preparing for a lighter week ahead.",
-            bg: 'rgba(100,100,130,0.1)',
-            border: 'rgba(100,100,130,0.5)',
-            text: 'rgba(180,180,200,0.9)',
+            bg: 'var(--banner-luteal-bg)',
+            border: 'var(--banner-luteal-border)',
+            text: 'var(--banner-luteal-text)',
             icon: '🔄'
         }
     }

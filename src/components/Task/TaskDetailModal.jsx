@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import DatePicker from 'react-datepicker'
-import { updateTask, deleteTask, completeTask, getTaskHistory } from '../../utils/storageHelpers'
+import { updateTask, deleteTask, completeTask, getTaskHistory, logTaskHistory, getRecurringDefinition, getAllTasks, getAllCycles } from '../../utils/storageHelpers'
+import { scheduleTask } from '../../utils/taskScheduler'
+import { stopRecurringSeries, editRecurringSeries } from '../../utils/recurringEngine'
 
 const ENERGY_LABELS = { high: 'High Energy', medium: 'Medium Energy', low: 'Low Energy' }
 const ACTION_LABELS = {
@@ -13,11 +15,13 @@ const ACTION_LABELS = {
     split: 'Split'
 }
 
-function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
+function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks: allTasks = [], userPreferences = {} }) {
     const [editing, setEditing] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
+    const [confirmStopSeries, setConfirmStopSeries] = useState(false)
     const [loading, setLoading] = useState(false)
     const [history, setHistory] = useState([])
+    const [recurringDef, setRecurringDef] = useState(null)
 
     const [name, setName] = useState('')
     const [energyLevel, setEnergyLevel] = useState('')
@@ -34,7 +38,12 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
         setPreferredDays(task.preferredDays || [])
         setEditing(false)
         setConfirmDelete(false)
+        setConfirmStopSeries(false)
+        setRecurringDef(null)
         loadHistory(task.id)
+        if (task.recurringDefinitionId) {
+            getRecurringDefinition(task.recurringDefinitionId).then(def => setRecurringDef(def || null))
+        }
     }, [task?.id])
 
     async function loadHistory(taskId) {
@@ -55,13 +64,57 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
     async function handleSave() {
         setLoading(true)
         try {
-            await updateTask(task.id, {
+            const newDeadline = deadline ? format(deadline, 'yyyy-MM-dd') : null
+            const newScheduledDate = scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null
+            const newEnergyLevel = energyLevel || null
+
+            const updates = {
                 name,
-                energyLevel: energyLevel || null,
-                deadline: deadline ? format(deadline, 'yyyy-MM-dd') : null,
-                scheduledDate: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
+                energyLevel: newEnergyLevel,
+                deadline: newDeadline,
+                scheduledDate: newScheduledDate,
                 preferredDays: preferredDays.length > 0 ? preferredDays : null
-            })
+            }
+
+            // Check if deadline or energy changed — may need rescheduling
+            const deadlineChanged = newDeadline !== (task.deadline || null)
+            const energyChanged = newEnergyLevel !== (task.energyLevel || null)
+            const scheduledDateManuallyChanged = newScheduledDate !== (task.scheduledDate || null)
+
+            // If the user manually changed the scheduled date, respect that
+            if (scheduledDateManuallyChanged) {
+                updates.autoScheduled = false
+            }
+
+            // Auto-reschedule if deadline/energy changed, task is auto-scheduled,
+            // user didn't manually move it, and rescheduling is automatic
+            const shouldReschedule = (deadlineChanged || energyChanged) &&
+                !scheduledDateManuallyChanged &&
+                task.autoScheduled &&
+                !task.completed &&
+                cycles.length >= 2 &&
+                userPreferences?.reschedulingBehavior === 'automatic'
+
+            if (shouldReschedule) {
+                const updatedTask = { ...task, ...updates }
+                const bestDate = scheduleTask(updatedTask, allTasks, cycles, userPreferences)
+                if (bestDate && bestDate !== task.scheduledDate) {
+                    updates.scheduledDate = bestDate
+                    updates.autoScheduled = true
+                    await updateTask(task.id, updates)
+                    await logTaskHistory(task.id, 'rescheduled', {
+                        trigger: 'task_edit',
+                        from: task.scheduledDate,
+                        to: bestDate,
+                        reason: deadlineChanged ? 'deadline changed' : 'energy level changed'
+                    })
+                } else {
+                    await updateTask(task.id, updates)
+                }
+            } else {
+                await updateTask(task.id, updates)
+            }
+
             if (onSaved) await onSaved()
             setEditing(false)
             await loadHistory(task.id)
@@ -96,6 +149,34 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
         } finally {
             setLoading(false)
         }
+    }
+
+    async function handleStopSeries() {
+        setLoading(true)
+        try {
+            const currentTasks = await getAllTasks()
+            await stopRecurringSeries(task.recurringDefinitionId, currentTasks)
+            if (onSaved) await onSaved()
+            onClose()
+        } catch (e) {
+            console.error('Failed to stop recurring series:', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const isRecurring = !!task?.recurringDefinitionId
+    const instanceStatusLabels = {
+        active: { label: 'Active', color: 'var(--purple-primary)' },
+        completed: { label: 'Completed', color: '#4ade80' },
+        missed: { label: 'Missed', color: '#f59e0b' },
+        skipped: { label: 'Skipped', color: 'var(--text-tertiary)' }
+    }
+
+    const recurrenceTypeLabels = {
+        daily: 'Daily',
+        weekly: 'Weekly',
+        custom: 'Custom interval'
     }
 
     if (!task) return null
@@ -220,6 +301,46 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                             )}
                         </div>
 
+                        {/* Recurring Info */}
+                        {isRecurring && (
+                            <div className="rounded-xl p-4 space-y-2"
+                                 style={{ background: 'var(--surface-2)', border: '1px solid var(--border-subtle)' }}>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm opacity-60">🔁</span>
+                                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--purple-primary)' }}>
+                                        Recurring Task
+                                    </span>
+                                    {task.instanceNumber && (
+                                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                            · Instance #{task.instanceNumber}
+                                        </span>
+                                    )}
+                                </div>
+                                {task.instanceStatus && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: instanceStatusLabels[task.instanceStatus]?.color || 'var(--text-tertiary)' }} />
+                                        <span className="text-xs font-medium" style={{ color: instanceStatusLabels[task.instanceStatus]?.color || 'var(--text-tertiary)' }}>
+                                            {instanceStatusLabels[task.instanceStatus]?.label || task.instanceStatus}
+                                        </span>
+                                    </div>
+                                )}
+                                {recurringDef && (
+                                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                        {recurrenceTypeLabels[recurringDef.recurrence?.type] || 'Recurring'}
+                                        {recurringDef.recurrence?.type === 'weekly' && recurringDef.recurrence?.preferredDays?.length > 0 && (
+                                            <span> · {recurringDef.recurrence.preferredDays.join(', ')}</span>
+                                        )}
+                                        {recurringDef.recurrence?.type === 'custom' && recurringDef.recurrence?.interval && (
+                                            <span> · Every {recurringDef.recurrence.interval} days</span>
+                                        )}
+                                        {recurringDef.skipDuringMenstrual && (
+                                            <span> · Skips menstrual</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* History */}
                         {history.length > 0 && (
                             <div>
@@ -256,7 +377,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                     className="flex-1 py-2.5 text-white text-sm font-medium rounded-xl disabled:opacity-50"
                                     style={{ background: '#ef4444' }}
                                 >
-                                    {loading ? 'Deleting…' : 'Yes, delete'}
+                                    {loading ? 'Deleting…' : isRecurring ? 'Yes, delete this instance' : 'Yes, delete'}
                                 </button>
                                 <button
                                     onClick={() => setConfirmDelete(false)}
@@ -265,6 +386,29 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 >
                                     Cancel
                                 </button>
+                            </div>
+                        ) : confirmStopSeries ? (
+                            <div className="space-y-2">
+                                <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+                                    Stop this recurring series? Future instances will be deleted. Past instances are preserved.
+                                </p>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleStopSeries}
+                                        disabled={loading}
+                                        className="flex-1 py-2.5 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+                                        style={{ background: '#ef4444' }}
+                                    >
+                                        {loading ? 'Stopping…' : 'Yes, stop series'}
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmStopSeries(false)}
+                                        className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                        style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         ) : editing ? (
                             <div className="flex gap-2">
@@ -285,31 +429,42 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted }) {
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex gap-2">
-                                {!task.completed && (
+                            <div className="space-y-2">
+                                <div className="flex gap-2">
+                                    {!task.completed && (
+                                        <button
+                                            onClick={handleComplete}
+                                            disabled={loading}
+                                            className="py-2.5 px-4 text-sm font-medium rounded-xl disabled:opacity-50"
+                                            style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80' }}
+                                        >
+                                            ✓ Done
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={handleComplete}
-                                        disabled={loading}
-                                        className="py-2.5 px-4 text-sm font-medium rounded-xl disabled:opacity-50"
-                                        style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80' }}
+                                        onClick={() => setEditing(true)}
+                                        className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                        style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
                                     >
-                                        ✓ Done
+                                        {isRecurring ? 'Edit Instance' : 'Edit'}
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmDelete(true)}
+                                        className="py-2.5 px-4 text-sm font-medium rounded-xl"
+                                        style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                                {isRecurring && !task.completed && (
+                                    <button
+                                        onClick={() => setConfirmStopSeries(true)}
+                                        className="w-full py-2 text-xs font-medium rounded-xl"
+                                        style={{ background: 'rgba(239,68,68,0.05)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+                                    >
+                                        Stop Recurring Series
                                     </button>
                                 )}
-                                <button
-                                    onClick={() => setEditing(true)}
-                                    className="flex-1 py-2.5 text-sm font-medium rounded-xl"
-                                    style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => setConfirmDelete(true)}
-                                    className="py-2.5 px-4 text-sm font-medium rounded-xl"
-                                    style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
-                                >
-                                    Delete
-                                </button>
                             </div>
                         )}
                     </div>

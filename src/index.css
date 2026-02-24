@@ -80,6 +80,39 @@
   /* Header gradient */
   --header-bg: linear-gradient(135deg, rgba(198,120,221,0.15), rgba(220,100,60,0.08));
 
+  /* Banner colors — dark theme (bright text on dark bg) */
+  --banner-menstrual-bg: rgba(200,60,80,0.1);
+  --banner-menstrual-border: rgba(200,60,80,0.5);
+  --banner-menstrual-text: rgba(255,150,160,0.9);
+
+  --banner-follicular-bg: rgba(210,140,40,0.1);
+  --banner-follicular-border: rgba(210,140,40,0.5);
+  --banner-follicular-text: rgba(255,200,100,0.9);
+
+  --banner-ovulation-bg: rgba(160,70,220,0.1);
+  --banner-ovulation-border: rgba(160,70,220,0.5);
+  --banner-ovulation-text: rgba(208,136,237,0.9);
+
+  --banner-luteal-bg: rgba(100,100,130,0.1);
+  --banner-luteal-border: rgba(100,100,130,0.5);
+  --banner-luteal-text: rgba(180,180,200,0.9);
+
+  --banner-error-bg: rgba(239,68,68,0.1);
+  --banner-error-border: rgba(239,68,68,0.5);
+  --banner-error-text: rgba(252,165,165,0.9);
+
+  --banner-warning-bg: rgba(251,191,36,0.1);
+  --banner-warning-border: rgba(251,191,36,0.5);
+  --banner-warning-text: rgba(253,224,71,0.9);
+
+  --banner-info-bg: rgba(96,165,250,0.1);
+  --banner-info-border: rgba(96,165,250,0.4);
+  --banner-info-text: rgba(147,197,253,0.9);
+
+  --banner-purple-bg: rgba(198,120,221,0.12);
+  --banner-purple-border: var(--purple-primary);
+  --banner-purple-text: var(--purple-light);
+
   /* Scrollbar */
   --scrollbar-thumb: rgba(255,255,255,0.1);
   --scrollbar-thumb-hover: rgba(255,255,255,0.2);
@@ -146,6 +179,39 @@
 
   /* Header gradient */
   --header-bg: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(234,88,12,0.04));
+
+  /* Banner colors — light theme (dark text on light bg) */
+  --banner-menstrual-bg: #fef2f2;
+  --banner-menstrual-border: #f87171;
+  --banner-menstrual-text: #b91c1c;
+
+  --banner-follicular-bg: #fff7ed;
+  --banner-follicular-border: #fb923c;
+  --banner-follicular-text: #c2410c;
+
+  --banner-ovulation-bg: #f5f3ff;
+  --banner-ovulation-border: #a78bfa;
+  --banner-ovulation-text: #6d28d9;
+
+  --banner-luteal-bg: #f3f4f6;
+  --banner-luteal-border: #9ca3af;
+  --banner-luteal-text: #374151;
+
+  --banner-error-bg: #fef2f2;
+  --banner-error-border: #f87171;
+  --banner-error-text: #b91c1c;
+
+  --banner-warning-bg: #fffbeb;
+  --banner-warning-border: #f59e0b;
+  --banner-warning-text: #92400e;
+
+  --banner-info-bg: #eff6ff;
+  --banner-info-border: #60a5fa;
+  --banner-info-text: #1d4ed8;
+
+  --banner-purple-bg: #f5f3ff;
+  --banner-purple-border: var(--purple-primary);
+  --banner-purple-text: #5b21b6;
 
   /* Scrollbar */
   --scrollbar-thumb: rgba(0,0,0,0.12);

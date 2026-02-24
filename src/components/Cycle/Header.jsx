@@ -1,4 +1,8 @@
+import { useAuth } from '../../contexts/AuthContext'
+
 function Header({ currentPhase, cycleDay }) {
+    const { user, logout } = useAuth()
+
     // Format phase name for display
     const formatPhaseName = (phase) => {
         if (!phase || phase === 'Unknown' || phase === null) return 'No Cycle Data'
@@ -37,30 +41,59 @@ function Header({ currentPhase, cycleDay }) {
                         🧪 Beta
                     </span>
                 </div>
-                <div
-                    className="flex items-center gap-3 px-4 py-2 rounded-full text-sm"
-                    style={{
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border-subtle)',
-                        color: 'var(--text-secondary)'
-                    }}
-                >
+                <div className="flex items-center gap-4">
                     <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ background: phaseIndicatorColors[currentPhase] || 'rgba(255,255,255,0.3)' }}
-                    />
-                    <span>
-                        {currentPhase === 'Unknown' || currentPhase === null || !currentPhase ? (
-                            'No Cycle Data - Log Your Period'
-                        ) : (
-                            `${formatPhaseName(currentPhase)} Phase • Day ${cycleDay}`
-                        )}
-                    </span>
+                        className="flex items-center gap-3 px-4 py-2 rounded-full text-sm"
+                        style={{
+                            background: 'var(--surface-2)',
+                            border: '1px solid var(--border-subtle)',
+                            color: 'var(--text-secondary)'
+                        }}
+                    >
+                        <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ background: phaseIndicatorColors[currentPhase] || 'rgba(255,255,255,0.3)' }}
+                        />
+                        <span>
+                            {currentPhase === 'Unknown' || currentPhase === null || !currentPhase ? (
+                                'No Cycle Data - Log Your Period'
+                            ) : (
+                                `${formatPhaseName(currentPhase)} Phase • Day ${cycleDay}`
+                            )}
+                        </span>
+                    </div>
+                    {user && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs truncate max-w-[140px]"
+                                  style={{ color: 'var(--text-tertiary)' }}>
+                                {user.email}
+                            </span>
+                            <button
+                                onClick={logout}
+                                className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+                                style={{
+                                    background: 'var(--surface-2)',
+                                    border: '1px solid var(--border-subtle)',
+                                    color: 'var(--text-secondary)'
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = 'var(--purple-primary)'
+                                    e.currentTarget.style.color = 'var(--purple-primary)'
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                                    e.currentTarget.style.color = 'var(--text-secondary)'
+                                }}
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="max-w-7xl mx-auto mt-2">
                 <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    Data stored locally on your device
+                    Synced securely to cloud
                 </p>
             </div>
         </div>
