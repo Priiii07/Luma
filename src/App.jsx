@@ -31,6 +31,7 @@ import { loadUserPreferences } from "./store/userPreferences";
 import { useAuth } from "./contexts/AuthContext";
 import LoginPage from "./components/Auth/LoginPage";
 import MigrationPrompt from "./components/Auth/MigrationPrompt";
+import InstallPrompt from "./components/InstallPrompt";
 import { hasLocalData, isMigrationComplete } from "./utils/migrationTool";
 
 // Import test function (remove in production)
@@ -430,6 +431,9 @@ function App() {
         isOpen={showPrivacy}
         onClose={() => setShowPrivacy(false)}
       />
+
+      {/* PWA install prompt */}
+      <InstallPrompt />
 
       {/* Floating feedback button */}
       <a
