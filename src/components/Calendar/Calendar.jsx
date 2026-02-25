@@ -83,11 +83,11 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
 
     return (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="px-6 py-4 flex-1 flex flex-col">
+            <div className="px-2 py-2 md:px-6 md:py-4 flex-1 flex flex-col">
                 {/* Weekday headers */}
-                <div className="grid grid-cols-7 gap-2 mb-2">
+                <div className="grid grid-cols-7 gap-1 md:gap-2 mb-1 md:mb-2">
                     {weekdays.map(day => (
-                        <div key={day} className="text-center text-xs font-semibold uppercase p-2"
+                        <div key={day} className="text-center text-[10px] md:text-xs font-semibold uppercase p-1 md:p-2"
                              style={{ color: 'var(--text-tertiary)' }}>
                             {day}
                         </div>
@@ -95,7 +95,7 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
                 </div>
 
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-2 flex-1">
+                <div className="grid grid-cols-7 gap-1 md:gap-2 flex-1">
                     {calendarDays.map((day, index) => (
                         <CalendarDay
                             key={index}

@@ -22,23 +22,26 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
 
     const ps = phaseStyles[phase] || phaseStyles.luteal
 
+    const visibleTasks = tasks ? tasks.slice(0, 3) : []
+    const hiddenCount = tasks ? Math.max(0, tasks.length - 3) : 0
+
     return (
         <DroppableCalendarDay dateStr={dateStr}>
             <div
                 onClick={onClick}
                 className={`
-                    min-h-[100px] rounded-lg p-2 relative cursor-pointer transition-all
+                    min-h-[60px] md:min-h-[100px] rounded-md md:rounded-lg p-1 md:p-2 relative cursor-pointer transition-all
                     hover:brightness-110
                     ${isOtherMonth ? 'opacity-30' : ''}
                 `}
                 style={{
                     background: ps.background,
-                    border: isToday ? `3px solid ${ps.border}` : `1px solid ${ps.border}`,
-                    boxShadow: isToday ? `0 0 20px ${ps.background}, 0 8px 16px rgba(0,0,0,0.3)` : 'none'
+                    border: isToday ? `2px solid ${ps.border}` : `1px solid ${ps.border}`,
+                    boxShadow: isToday ? `0 0 12px ${ps.background}, 0 4px 8px rgba(0,0,0,0.2)` : 'none'
                 }}
             >
                 <div
-                    className="inline-block font-semibold text-sm mb-1 px-2 py-1 rounded"
+                    className="inline-block font-semibold text-[11px] md:text-sm mb-0.5 md:mb-1 px-1 md:px-2 py-0.5 md:py-1 rounded"
                     style={{
                         color: 'var(--text-primary)',
                         background: isToday ? 'var(--surface-3)' : (tasks && tasks.length > 0 ? 'var(--surface-hover)' : 'transparent'),
@@ -48,35 +51,61 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                     {date}
                 </div>
 
-                {tasks && tasks.map((task, index) => (
-                    <DraggableTask key={task.id ?? index} task={task}>
+                {/* Desktop: show all tasks */}
+                <div className="hidden md:block">
+                    {tasks && tasks.map((task, index) => (
+                        <DraggableTask key={task.id ?? index} task={task}>
+                            <div
+                                onClick={(e) => { e.stopPropagation(); onTaskClick?.(task) }}
+                                className={`
+                                    text-xs px-2 py-1 rounded mt-1
+                                    overflow-hidden text-ellipsis whitespace-nowrap
+                                    transition-all cursor-pointer
+                                    ${task.completed ? 'line-through opacity-60' : ''}
+                                `}
+                                style={{
+                                    background: 'var(--surface-2)',
+                                    color: 'var(--text-primary)',
+                                    borderLeft: `3px solid ${energyColors[task.energyLevel] || 'rgba(255,255,255,0.2)'}`,
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.background = 'var(--purple-glow)'
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.background = 'var(--surface-2)'
+                                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)'
+                                }}
+                            >
+                                {task.recurringDefinitionId ? <span className="opacity-60 mr-0.5">🔁</span> : null}{task.name}
+                            </div>
+                        </DraggableTask>
+                    ))}
+                </div>
+
+                {/* Mobile: show compact task dots/chips */}
+                <div className="md:hidden flex flex-wrap gap-[2px] mt-0.5">
+                    {visibleTasks.map((task, index) => (
                         <div
+                            key={task.id ?? index}
                             onClick={(e) => { e.stopPropagation(); onTaskClick?.(task) }}
-                            className={`
-                                text-xs px-2 py-1 rounded mt-1
-                                overflow-hidden text-ellipsis whitespace-nowrap
-                                transition-all cursor-pointer
-                                ${task.completed ? 'line-through opacity-60' : ''}
-                            `}
+                            className={`w-full text-[8px] leading-tight px-1 py-[2px] rounded overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer ${task.completed ? 'line-through opacity-60' : ''}`}
                             style={{
                                 background: 'var(--surface-2)',
                                 color: 'var(--text-primary)',
-                                borderLeft: `3px solid ${energyColors[task.energyLevel] || 'rgba(255,255,255,0.2)'}`,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = 'var(--purple-glow)'
-                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = 'var(--surface-2)'
-                                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)'
+                                borderLeft: `2px solid ${energyColors[task.energyLevel] || 'rgba(255,255,255,0.2)'}`
                             }}
                         >
-                            {task.recurringDefinitionId ? <span className="opacity-60 mr-0.5">🔁</span> : null}{task.name}
+                            {task.name}
                         </div>
-                    </DraggableTask>
-                ))}
+                    ))}
+                    {hiddenCount > 0 && (
+                        <div className="text-[8px] leading-tight" style={{ color: 'var(--text-tertiary)' }}>
+                            +{hiddenCount}
+                        </div>
+                    )}
+                </div>
             </div>
         </DroppableCalendarDay>
     )

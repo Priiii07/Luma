@@ -48,7 +48,7 @@ function OverloadBanner({ warnings = [], onDismiss }) {
                 return (
                     <div
                         key={w.id}
-                        className="mx-6 mb-2 px-4 py-3 rounded flex items-start gap-3 text-sm"
+                        className="mx-2 md:mx-6 mb-2 px-3 md:px-4 py-2 md:py-3 rounded flex items-start gap-2 md:gap-3 text-xs md:text-sm"
                         style={{
                             background: cfg.bg,
                             borderLeft: `4px solid ${cfg.border}`,

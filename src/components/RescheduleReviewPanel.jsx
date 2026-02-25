@@ -91,12 +91,12 @@ function RescheduleReviewPanel({ isOpen, onClose, suggestions = [], pullForward 
             <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-                <div className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col pointer-events-auto"
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4 pointer-events-none">
+                <div className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] md:max-h-[80vh] flex flex-col pointer-events-auto"
                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                     {/* Header */}
-                    <div className="px-6 py-5 flex justify-between items-start shrink-0"
+                    <div className="px-4 py-3 md:px-6 md:py-5 flex justify-between items-start shrink-0"
                          style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         <div>
                             <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Schedule Review</h3>
