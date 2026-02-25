@@ -98,13 +98,13 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
             )}
 
             <div className={`
-                fixed right-0 top-0 w-96 h-screen shadow-2xl z-50
+                fixed right-0 top-0 w-full md:w-96 h-screen shadow-2xl z-50
                 transition-transform duration-300 overflow-y-auto
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
             `} style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-subtle)' }}>
-                <div className="px-6 py-6 flex justify-between items-center"
+                <div className="px-4 py-4 md:px-6 md:py-6 flex justify-between items-center"
                      style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <h3 className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Settings</h3>
+                    <h3 className="text-base md:text-lg font-medium" style={{ color: 'var(--text-primary)' }}>Settings</h3>
                     <button
                         onClick={onClose}
                         className="text-2xl leading-none transition-colors"
@@ -114,7 +114,7 @@ function SettingsPanel({ isOpen, onClose, preferences, onPreferencesChanged, onD
                     </button>
                 </div>
 
-                <div className="px-6 py-6 space-y-8">
+                <div className="px-4 py-4 md:px-6 md:py-6 space-y-6 md:space-y-8">
 
                     {/* ── Appearance ── */}
                     <div>

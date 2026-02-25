@@ -36,7 +36,7 @@ function SmartBanner({ phase }) {
 
     return (
         <div
-            className="mx-6 my-4 px-4 py-3 rounded flex items-center gap-3 text-sm"
+            className="mx-2 md:mx-6 my-2 md:my-4 px-3 md:px-4 py-2 md:py-3 rounded flex items-center gap-2 md:gap-3 text-xs md:text-sm"
             style={{
                 background: config.bg,
                 borderLeft: `4px solid ${config.border}`,

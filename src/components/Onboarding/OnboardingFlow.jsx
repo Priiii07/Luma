@@ -136,7 +136,7 @@ function OnboardingFlow({ cyclesLogged = 0, onComplete }) {
                 <div className="ember-orb-2" />
             </div>
 
-            <div className="rounded-2xl shadow-2xl w-full max-w-md p-8 relative z-10"
+            <div className="rounded-2xl shadow-2xl w-full max-w-md p-5 md:p-8 relative z-10"
                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                 {/* Progress dots */}

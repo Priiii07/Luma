@@ -332,7 +332,7 @@ function App() {
 
         {/* Auto-reschedule confirmation toast (automatic mode) */}
         {rescheduleNotification > 0 && (
-          <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
+          <div className="mx-2 md:mx-6 mb-2 md:mb-3 px-3 md:px-4 py-2 md:py-3 rounded flex items-center gap-2 md:gap-3 text-xs md:text-sm"
                style={{ background: 'var(--banner-purple-bg)', borderLeft: '4px solid var(--banner-purple-border)', color: 'var(--banner-purple-text)' }}>
             <span>✨</span>
             <span>
@@ -353,7 +353,7 @@ function App() {
         {!showReviewPanel &&
           pullForwardSuggestions.length > 0 &&
           isOnboarded && (
-            <div className="mx-6 mb-3 px-4 py-3 rounded flex items-center gap-3 text-sm"
+            <div className="mx-2 md:mx-6 mb-2 md:mb-3 px-3 md:px-4 py-2 md:py-3 rounded flex items-center gap-2 md:gap-3 text-xs md:text-sm"
                  style={{ background: 'var(--banner-info-bg)', borderLeft: '4px solid var(--banner-info-border)', color: 'var(--banner-info-text)' }}>
               <span>💡</span>
               <span>
@@ -440,7 +440,7 @@ function App() {
         href="https://forms.gle/WPBeFiHXHktwTQTx8"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 text-white px-4 py-3 rounded-full flex items-center gap-2 text-sm font-medium transition-all"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 text-white px-3 py-2 md:px-4 md:py-3 rounded-full flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium transition-all"
         style={{
           background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
           boxShadow: '0 4px 20px var(--purple-glow)'
@@ -451,7 +451,7 @@ function App() {
       </a>
 
       {/* Footer */}
-      <footer className="relative z-[1] px-6 py-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <footer className="relative z-[1] px-3 md:px-6 py-3 md:py-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto flex justify-between items-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
           <span>Cycle-Aware Planner — Beta</span>
           <div className="flex items-center gap-4">

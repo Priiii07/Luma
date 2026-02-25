@@ -28,7 +28,7 @@ function OverloadWarningModal({
             <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onCancel} />
 
             {/* Modal */}
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4 pointer-events-none">
                 <div className="rounded-2xl shadow-2xl w-full max-w-sm pointer-events-auto"
                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 

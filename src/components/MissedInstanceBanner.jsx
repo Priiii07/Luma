@@ -6,7 +6,7 @@ function MissedInstanceBanner({ missedInstances = [], onReschedule, onDismiss })
     if (!missedInstances.length) return null
 
     return (
-        <div className="mx-6 mb-3 px-4 py-3 rounded text-sm"
+        <div className="mx-2 md:mx-6 mb-2 md:mb-3 px-3 md:px-4 py-2 md:py-3 rounded text-xs md:text-sm"
              style={{
                  background: 'var(--banner-warning-bg)',
                  borderLeft: '4px solid var(--banner-warning-border)',

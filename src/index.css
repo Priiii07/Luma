@@ -227,6 +227,11 @@ body {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 /* Reset Vite's opinionated button defaults so Tailwind classes work cleanly */
@@ -646,4 +651,49 @@ input[type="checkbox"] {
 
 .install-prompt-btn-dismiss:hover {
   color: var(--text-primary);
+}
+
+/* ── Mobile Install Prompt ── */
+@media (max-width: 767px) {
+  .install-prompt {
+    bottom: 60px;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .install-prompt-icon img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .install-prompt-text strong {
+    font-size: 0.8rem;
+  }
+
+  .install-prompt-text span {
+    font-size: 0.7rem;
+  }
+
+  .install-prompt-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ── Mobile ambient orb sizing ── */
+@media (max-width: 767px) {
+  .ember-orb-1 {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: -50px;
+  }
+
+  .ember-orb-2 {
+    width: 250px;
+    height: 250px;
+    bottom: -50px;
+    left: -100px;
+  }
 }

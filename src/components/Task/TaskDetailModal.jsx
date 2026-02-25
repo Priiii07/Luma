@@ -187,12 +187,12 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
             <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-                <div className="rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col pointer-events-auto"
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4 pointer-events-none">
+                <div className="rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] md:max-h-[85vh] flex flex-col pointer-events-auto"
                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
 
                     {/* Header */}
-                    <div className="px-6 py-5 flex items-start justify-between shrink-0"
+                    <div className="px-4 py-3 md:px-6 md:py-5 flex items-start justify-between shrink-0"
                          style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         <div className="flex-1 min-w-0 pr-4">
                             {editing ? (
@@ -214,7 +214,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
                     </div>
 
                     {/* Body */}
-                    <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+                    <div className="overflow-y-auto flex-1 px-4 py-3 md:px-6 md:py-5 space-y-4 md:space-y-5">
 
                         {/* Scheduled Date */}
                         <div>
@@ -368,7 +368,7 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                    <div className="px-4 py-3 md:px-6 md:py-4 shrink-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                         {confirmDelete ? (
                             <div className="flex gap-2">
                                 <button
