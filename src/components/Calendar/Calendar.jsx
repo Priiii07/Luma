@@ -4,7 +4,7 @@ import { getMonthDates, isToday as checkIsToday } from '../../utils/dateHelpers'
 import { format, isSameMonth, isPast, startOfDay } from 'date-fns'
 import { getPhaseForDateAdvanced, calculateAverageCycleLength, predictNextPeriod } from '../../utils/cycleHelpers'
 
-function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskClick, onTaskMoved }) {
+function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskClick, onTaskMoved, onDayClick }) {
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
     // Generate dates for the calendar grid
@@ -60,7 +60,8 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
     )
 
     const handleDayClick = (day) => {
-        console.log('Day clicked:', format(day.fullDate, 'yyyy-MM-dd'))
+        const dateStr = format(day.fullDate, 'yyyy-MM-dd')
+        if (onDayClick) onDayClick(dateStr)
     }
 
     const handleDragEnd = (event) => {
