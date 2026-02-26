@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { loadUserPreferences, saveUserPreferences } from '../store/userPreferences'
+import { useAuth } from './AuthContext'
 
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
+    const { user } = useAuth()
+
     const [theme, setTheme] = useState(() => {
         // Instant: apply cached theme from localStorage to avoid flash
         const cached = localStorage.getItem('theme')
@@ -14,9 +17,10 @@ export function ThemeProvider({ children }) {
         return 'dark'
     })
 
-    // Load authoritative theme from Firestore
+    // Re-load theme from Firestore whenever auth state changes
     useEffect(() => {
-        async function init() {
+        if (!user) return
+        async function loadTheme() {
             try {
                 const prefs = await loadUserPreferences()
                 const savedTheme = prefs.theme || 'dark'
@@ -24,11 +28,11 @@ export function ThemeProvider({ children }) {
                 document.documentElement.setAttribute('data-theme', savedTheme)
                 localStorage.setItem('theme', savedTheme)
             } catch {
-                // If not authenticated yet, keep cached/default theme
+                // Keep cached/default theme on error
             }
         }
-        init()
-    }, [])
+        loadTheme()
+    }, [user])
 
     const updateTheme = async (newTheme) => {
         setTheme(newTheme)
