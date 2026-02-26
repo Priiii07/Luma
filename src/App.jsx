@@ -32,6 +32,7 @@ import { useAuth } from "./contexts/AuthContext";
 import LoginPage from "./components/Auth/LoginPage";
 import MigrationPrompt from "./components/Auth/MigrationPrompt";
 import InstallPrompt from "./components/InstallPrompt";
+import TaskPopupModal from "./components/TaskPopupModal";
 import { hasLocalData, isMigrationComplete } from "./utils/migrationTool";
 
 // Import test function (remove in production)
@@ -72,6 +73,9 @@ function App() {
 
   // Migration state
   const [showMigrationPrompt, setShowMigrationPrompt] = useState(false);
+
+  // Mobile task popup state
+  const [popupDateStr, setPopupDateStr] = useState(null);
 
   const loadPreferences = async () => {
     const prefs = await loadUserPreferences();
@@ -270,6 +274,13 @@ function App() {
     setMissedInstances(prev => prev.filter(t => t.id !== task.id));
   };
 
+  const handleDayClick = (dateStr) => {
+    // Only show popup on mobile
+    if (window.innerWidth < 768) {
+      setPopupDateStr(dateStr);
+    }
+  };
+
   const handleMissedDismiss = async (task) => {
     setMissedInstances(prev => prev.filter(t => t.id !== task.id));
   };
@@ -378,6 +389,7 @@ function App() {
             tasks={tasks}
             onTaskClick={setSelectedTask}
             onTaskMoved={handleTaskMoved}
+            onDayClick={handleDayClick}
           />
         </div>
       </div>
@@ -425,6 +437,17 @@ function App() {
         tasks={tasks}
         userPreferences={userPreferences}
       />
+
+      {/* Mobile task popup */}
+      {popupDateStr && (
+        <TaskPopupModal
+          dateStr={popupDateStr}
+          tasks={tasks}
+          onClose={() => setPopupDateStr(null)}
+          onAddTask={handleAddTask}
+          onTaskUpdated={() => {/* onSnapshot handles refresh */}}
+        />
+      )}
 
       {/* Privacy modal */}
       <PrivacyModal
