@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import Header from "./components/Cycle/Header";
-import Navigation from "./components/Calendar/Navigation";
-import Legend from "./components/Calendar/Legend";
-import SmartBanner from "./components/Task/SmartBanner";
-import Calendar from "./components/Calendar/Calendar";
+import TabBar from "./components/Navigation/TabBar";
+import DesktopSidebar from "./components/Navigation/DesktopSidebar";
+import HomeTab from "./components/Tabs/HomeTab";
+import CalendarTab from "./components/Tabs/CalendarTab";
+import TasksTab from "./components/Tabs/TasksTab";
+import ProfileTab from "./components/Tabs/ProfileTab";
 import TaskSidebar from "./components/Task/TaskSidebar";
 import PeriodSidebar from "./components/Cycle/PeriodSidebar";
 import OnboardingFlow from "./components/Onboarding/OnboardingFlow";
-import OverloadBanner from "./components/OverloadBanner";
-import MissedInstanceBanner from "./components/MissedInstanceBanner";
 import RescheduleReviewPanel from "./components/RescheduleReviewPanel";
-import SettingsPanel from "./components/Settings/SettingsPanel";
 import TaskDetailModal from "./components/Task/TaskDetailModal";
 import PrivacyModal from "./components/PrivacyModal";
+import TaskPopupModal from "./components/TaskPopupModal";
+import InstallPrompt from "./components/InstallPrompt";
+import LoginPage from "./components/Auth/LoginPage";
+import MigrationPrompt from "./components/Auth/MigrationPrompt";
+import TabLoading from "./components/TabLoading";
 import {
   getAllCycles,
   getAllTasks,
@@ -29,10 +33,6 @@ import { suggestPullForward } from "./utils/optimizationEngine";
 import { checkAndRegenerateAll, handleMissedInstances, handleRecurringOnCycleUpdate } from "./utils/recurringEngine";
 import { loadUserPreferences } from "./store/userPreferences";
 import { useAuth } from "./contexts/AuthContext";
-import LoginPage from "./components/Auth/LoginPage";
-import MigrationPrompt from "./components/Auth/MigrationPrompt";
-import InstallPrompt from "./components/InstallPrompt";
-import TaskPopupModal from "./components/TaskPopupModal";
 import { hasLocalData, isMigrationComplete } from "./utils/migrationTool";
 
 // Import test function (remove in production)
@@ -46,10 +46,12 @@ if (typeof window !== "undefined") {
 function App() {
   const { user } = useAuth();
 
+  // Tab navigation
+  const [activeTab, setActiveTab] = useState('home');
+
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // February 2026
   const [showTaskSidebar, setShowTaskSidebar] = useState(false);
   const [showPeriodSidebar, setShowPeriodSidebar] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [cycles, setCycles] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [currentPhaseInfo, setCurrentPhaseInfo] = useState({
@@ -163,14 +165,13 @@ function App() {
 
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // After a period is logged: run rescheduling check (onSnapshot handles state updates)
+  // After a period is logged: run rescheduling check
   const handleCycleLogged = async () => {
     const newCycles = await getAllCycles();
     const currentTasks = await getAllTasks();
 
-    if (newCycles.length < 2) return; // Need at least 2 cycles for meaningful reschedule
+    if (newCycles.length < 2) return;
 
-    // Load fresh preferences from DB so we never act on stale/null state
     const prefs = await loadUserPreferences();
     setUserPreferences(prefs);
 
@@ -189,7 +190,6 @@ function App() {
         setRescheduleSuggestions(result.suggestions);
       }
 
-      // Handle recurring tasks on cycle update
       await handleRecurringOnCycleUpdate(currentTasks, newCycles, prefs);
     } catch (error) {
       console.error("Error running reschedule check:", error);
@@ -197,7 +197,6 @@ function App() {
   };
 
   const handleOnboardingComplete = async () => {
-    // onSnapshot handles data refresh; just reload preferences
     await loadPreferences();
   };
 
@@ -256,12 +255,10 @@ function App() {
     setWarnings([]);
     setMissedInstances([]);
     setUserPreferences(null);
-    setShowSettings(false);
     loadPreferences();
   };
 
   const handleDataImported = async () => {
-    // onSnapshot handles data refresh; just reload preferences
     await loadPreferences();
   };
 
@@ -275,7 +272,6 @@ function App() {
   };
 
   const handleDayClick = (dateStr) => {
-    // Only show popup on mobile
     if (window.innerWidth < 768) {
       setPopupDateStr(dateStr);
     }
@@ -287,6 +283,7 @@ function App() {
 
   const isOnboarded = cycles.length >= 2;
   const visibleWarnings = warnings.filter((w) => !dismissedWarnings.has(w.id));
+  const dataLoading = !userPreferences;
 
   // Show login page if not authenticated
   if (!user) return <LoginPage />;
@@ -310,91 +307,103 @@ function App() {
       </div>
 
       <div className="flex-1 flex flex-col relative z-[1]">
+        {/* Header with desktop tab nav */}
         <Header
           currentPhase={currentPhaseInfo.phase || "Unknown"}
           cycleDay={currentPhaseInfo.cycleDay || 0}
-        />
-        <Navigation
-          month={format(currentDate, "MMMM")}
-          year={format(currentDate, "yyyy")}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
-          onAddTask={handleAddTask}
-          onLogPeriod={handleLogPeriod}
-          onOpenSettings={() => setShowSettings(true)}
-          isOnboarded={isOnboarded}
-          cyclesLogged={cycles.length}
-        />
-        <Legend />
-        <SmartBanner phase={currentPhaseInfo.phase} />
-
-        {/* Overload / energy-mismatch warning banners */}
-        <OverloadBanner
-          warnings={visibleWarnings}
-          onDismiss={handleDismissWarning}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
 
-        {/* Missed recurring task banner */}
-        <MissedInstanceBanner
-          missedInstances={missedInstances}
-          onReschedule={handleMissedReschedule}
-          onDismiss={handleMissedDismiss}
-        />
-
-        {/* Auto-reschedule confirmation toast (automatic mode) */}
-        {rescheduleNotification > 0 && (
-          <div className="mx-2 md:mx-6 mb-2 md:mb-3 px-3 md:px-4 py-2 md:py-3 rounded flex items-center gap-2 md:gap-3 text-xs md:text-sm"
-               style={{ background: 'var(--banner-purple-bg)', borderLeft: '4px solid var(--banner-purple-border)', color: 'var(--banner-purple-text)' }}>
-            <span>✨</span>
-            <span>
-              {rescheduleNotification} task
-              {rescheduleNotification !== 1 ? "s were" : " was"} automatically
-              rescheduled to better match your updated cycle.
-            </span>
-            <button
-              onClick={() => setRescheduleNotification(0)}
-              className="ml-auto opacity-50 hover:opacity-80 text-xl leading-none"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Pull-forward nudge — shown when review panel is closed */}
-        {!showReviewPanel &&
-          pullForwardSuggestions.length > 0 &&
-          isOnboarded && (
-            <div className="mx-2 md:mx-6 mb-2 md:mb-3 px-3 md:px-4 py-2 md:py-3 rounded flex items-center gap-2 md:gap-3 text-xs md:text-sm"
-                 style={{ background: 'var(--banner-info-bg)', borderLeft: '4px solid var(--banner-info-border)', color: 'var(--banner-info-text)' }}>
-              <span>💡</span>
-              <span>
-                You have free slots in an upcoming high-energy week. Pull
-                forward some tasks?
-              </span>
-              <button
-                onClick={() => setShowReviewPanel(true)}
-                className="ml-auto shrink-0 px-3 py-1 text-white text-xs font-medium rounded-lg transition-colors"
-                style={{ background: 'var(--purple-primary)' }}
-              >
-                Review
-              </button>
-            </div>
-          )}
-
-        <div className="flex-1 flex flex-col">
-          <Calendar
-            key={cycles.map((c) => c.id + c.startDate).join(",")}
-            currentDate={currentDate}
+        {/* Main layout: desktop sidebar + tab content */}
+        <div className="app-layout">
+          {/* Desktop sidebar */}
+          <DesktopSidebar
+            currentPhaseInfo={currentPhaseInfo}
             cycles={cycles}
             tasks={tasks}
-            onTaskClick={setSelectedTask}
-            onTaskMoved={handleTaskMoved}
-            onDayClick={handleDayClick}
+            isOnboarded={isOnboarded}
+            onLogPeriod={handleLogPeriod}
+            onAddTask={handleAddTask}
           />
+
+          {/* Tab content */}
+          <div className="tab-content">
+           <div className="tab-panel" key={activeTab}>
+            {dataLoading && activeTab !== 'calendar' && <TabLoading />}
+            {activeTab === 'home' && !dataLoading && (
+              <HomeTab
+                currentPhaseInfo={currentPhaseInfo}
+                tasks={tasks}
+                cycles={cycles}
+                warnings={visibleWarnings}
+                missedInstances={missedInstances}
+                pullForwardSuggestions={pullForwardSuggestions}
+                showReviewPanel={showReviewPanel}
+                rescheduleNotification={rescheduleNotification}
+                isOnboarded={isOnboarded}
+                onAddTask={handleAddTask}
+                onTaskClick={setSelectedTask}
+                onToggleComplete={() => {/* onSnapshot handles refresh */}}
+                onDismissWarning={handleDismissWarning}
+                onMissedReschedule={handleMissedReschedule}
+                onMissedDismiss={handleMissedDismiss}
+                onSetRescheduleNotification={setRescheduleNotification}
+                onOpenReviewPanel={() => setShowReviewPanel(true)}
+                onTabChange={setActiveTab}
+              />
+            )}
+
+            {activeTab === 'calendar' && (
+              <CalendarTab
+                currentDate={currentDate}
+                cycles={cycles}
+                tasks={tasks}
+                isOnboarded={isOnboarded}
+                cyclesLogged={cycles.length}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                onAddTask={handleAddTask}
+                onLogPeriod={handleLogPeriod}
+                onTaskClick={setSelectedTask}
+                onTaskMoved={handleTaskMoved}
+                onDayClick={handleDayClick}
+                onTabChange={setActiveTab}
+              />
+            )}
+
+            {activeTab === 'tasks' && (
+              <TasksTab
+                tasks={tasks}
+                onTaskClick={setSelectedTask}
+                onAddTask={handleAddTask}
+                onToggleComplete={() => {/* onSnapshot handles refresh */}}
+                isOnboarded={isOnboarded}
+              />
+            )}
+
+            {activeTab === 'profile' && (
+              <ProfileTab
+                cycles={cycles}
+                preferences={userPreferences}
+                onPreferencesChanged={setUserPreferences}
+                onDataCleared={handleDataCleared}
+                onDataImported={handleDataImported}
+                onLogPeriod={handleLogPeriod}
+                onAddTask={handleAddTask}
+                onOpenPrivacy={() => setShowPrivacy(true)}
+                isOnboarded={isOnboarded}
+              />
+            )}
+           </div>
+          </div>
         </div>
       </div>
 
-      {/* Sidebars */}
+      {/* Mobile bottom tab bar */}
+      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Global overlays */}
       <TaskSidebar
         isOpen={showTaskSidebar}
         onClose={() => setShowTaskSidebar(false)}
@@ -408,14 +417,6 @@ function App() {
         onClose={() => setShowPeriodSidebar(false)}
         onCycleLogged={handleCycleLogged}
         cycles={cycles}
-      />
-      <SettingsPanel
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        preferences={userPreferences}
-        onPreferencesChanged={setUserPreferences}
-        onDataCleared={handleDataCleared}
-        onDataImported={handleDataImported}
       />
 
       {/* Reschedule / pull-forward review modal */}
@@ -457,50 +458,6 @@ function App() {
 
       {/* PWA install prompt */}
       <InstallPrompt />
-
-      {/* Floating feedback button */}
-      <a
-        href="https://forms.gle/WPBeFiHXHktwTQTx8"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 text-white px-3 py-2 md:px-4 md:py-3 rounded-full flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium transition-all"
-        style={{
-          background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))',
-          boxShadow: '0 4px 20px var(--purple-glow)'
-        }}
-      >
-        <span>💬</span>
-        <span>Feedback</span>
-      </a>
-
-      {/* Footer */}
-      <footer className="relative z-[1] px-3 md:px-6 py-3 md:py-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          <span>Cycle-Aware Planner — Beta</span>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowPrivacy(true)}
-              className="transition-colors"
-              style={{ color: 'var(--text-tertiary)' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--purple-primary)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-            >
-              Privacy
-            </button>
-            <a
-              href="https://forms.gle/WPBeFiHXHktwTQTx8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors"
-              style={{ color: 'var(--text-tertiary)' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--purple-primary)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-            >
-              Feedback
-            </a>
-          </div>
-        </div>
-      </footer>
 
       {/* Onboarding overlay — shown until 2 cycles are logged */}
       {!isOnboarded && (
