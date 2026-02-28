@@ -27,7 +27,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     ›
                 </button>
             </div>
-            <div className="flex gap-1.5 md:gap-3 items-center">
+            <div className="nav-action-buttons flex gap-1.5 md:gap-3 items-center">
                 {/* Settings gear */}
                 <button
                     onClick={onOpenSettings}

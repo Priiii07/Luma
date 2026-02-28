@@ -1468,7 +1468,8 @@ input[type="checkbox"] {
 @media (min-width: 768px) {
   .home-tab {
     padding: 24px 32px;
-    max-width: 720px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .home-today-date {
@@ -1618,7 +1619,8 @@ input[type="checkbox"] {
 
 @media (min-width: 768px) {
   .tasks-tab {
-    max-width: 720px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .tasks-toolbar {
@@ -1814,7 +1816,8 @@ input[type="checkbox"] {
 @media (min-width: 768px) {
   .profile-tab {
     padding: 24px 32px;
-    max-width: 600px;
+    max-width: 720px;
+    margin: 0 auto;
   }
 }
 
@@ -2307,6 +2310,10 @@ input[type="checkbox"] {
 @media (min-width: 768px) {
   .calendar-sub-header {
     padding: 12px 24px;
+  }
+
+  .nav-action-buttons {
+    display: none;
   }
 }
 
