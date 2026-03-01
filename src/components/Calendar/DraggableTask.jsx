@@ -1,9 +1,10 @@
 import { useDraggable } from '@dnd-kit/core'
 
-function DraggableTask({ task, children }) {
+function DraggableTask({ task, children, disabled = false }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `task-${task.id}`,
-        data: { task }
+        data: { task },
+        disabled
     })
 
     const style = transform
@@ -19,9 +20,9 @@ function DraggableTask({ task, children }) {
         <div
             ref={setNodeRef}
             style={style}
-            {...listeners}
-            {...attributes}
-            className={`${isDragging ? 'shadow-xl' : ''} touch-none`}
+            {...(disabled ? {} : listeners)}
+            {...(disabled ? {} : attributes)}
+            className={`${isDragging ? 'shadow-xl' : ''} ${disabled ? '' : 'touch-none'}`}
         >
             {children}
         </div>

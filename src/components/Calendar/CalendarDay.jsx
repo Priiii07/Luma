@@ -1,7 +1,7 @@
 import DraggableTask from './DraggableTask'
 import DroppableCalendarDay from './DroppableCalendarDay'
 
-function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onClick, onTaskClick }) {
+function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onClick, onTaskClick, isMobile = false }) {
     const phaseStyles = {
         menstrual: { background: 'var(--phase-menstrual)', border: 'var(--phase-menstrual-border)' },
         follicular: { background: 'var(--phase-follicular)', border: 'var(--phase-follicular-border)' },
@@ -30,7 +30,7 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
             <div
                 onClick={onClick}
                 className={`
-                    min-h-[60px] md:min-h-[100px] rounded-md md:rounded-lg p-1 md:p-2 relative cursor-pointer transition-all
+                    calendar-no-select min-h-[60px] md:min-h-[100px] rounded-md md:rounded-lg p-1 md:p-2 relative cursor-pointer transition-all
                     hover:brightness-110
                     ${isOtherMonth ? 'opacity-30' : ''}
                 `}
@@ -54,7 +54,7 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                 {/* Desktop: show all tasks */}
                 <div className="hidden md:block">
                     {tasks && tasks.map((task, index) => (
-                        <DraggableTask key={task.id ?? index} task={task}>
+                        <DraggableTask key={task.id ?? index} task={task} disabled={isMobile}>
                             <div
                                 onClick={(e) => { e.stopPropagation(); onTaskClick?.(task) }}
                                 className={`
