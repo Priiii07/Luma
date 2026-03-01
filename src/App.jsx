@@ -49,7 +49,7 @@ function App() {
   // Tab navigation
   const [activeTab, setActiveTab] = useState('home');
 
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // February 2026
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [showTaskSidebar, setShowTaskSidebar] = useState(false);
   const [showPeriodSidebar, setShowPeriodSidebar] = useState(false);
   const [cycles, setCycles] = useState([]);
