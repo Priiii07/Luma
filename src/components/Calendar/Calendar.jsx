@@ -3,8 +3,10 @@ import CalendarDay from './CalendarDay'
 import { getMonthDates, isToday as checkIsToday } from '../../utils/dateHelpers'
 import { format, isSameMonth, isPast, startOfDay } from 'date-fns'
 import { getPhaseForDateAdvanced, calculateAverageCycleLength, predictNextPeriod } from '../../utils/cycleHelpers'
+import { isMobileDevice } from '../../utils/deviceDetection'
 
 function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskClick, onTaskMoved, onDayClick }) {
+    const isMobile = isMobileDevice()
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
     // Generate dates for the calendar grid
@@ -55,8 +57,9 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
     })
 
     // Require 8px drag distance before activating (avoids accidental drags on click)
+    // On mobile, use a very high distance so drag never activates
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+        useSensor(PointerSensor, { activationConstraint: { distance: isMobile ? 9999 : 8 } })
     )
 
     const handleDayClick = (day) => {
@@ -108,6 +111,7 @@ function Calendar({ currentDate = new Date(), cycles = [], tasks = [], onTaskCli
                             tasks={day.tasks}
                             onClick={() => handleDayClick(day)}
                             onTaskClick={onTaskClick}
+                            isMobile={isMobile}
                         />
                     ))}
                 </div>

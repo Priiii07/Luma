@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
-import { completeTask, deleteTask } from '../utils/storageHelpers'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import { completeTask, deleteTask, updateTask } from '../utils/storageHelpers'
 
 const ENERGY_LABELS = { high: 'High Energy', medium: 'Medium Energy', low: 'Low Energy' }
 const SWIPE_THRESHOLD = 50
@@ -9,6 +11,8 @@ function TaskPopupModal({ dateStr, tasks = [], onClose, onAddTask, onTaskUpdated
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(false)
     const [swipeOffset, setSwipeOffset] = useState(0)
+    const [showReschedulePicker, setShowReschedulePicker] = useState(false)
+    const [rescheduleDate, setRescheduleDate] = useState(null)
     const touchStartRef = useRef(null)
     const popupContentRef = useRef(null)
 
@@ -17,10 +21,16 @@ function TaskPopupModal({ dateStr, tasks = [], onClose, onAddTask, onTaskUpdated
     const currentTask = dateTasks[currentIndex]
     const hasMultipleTasks = dateTasks.length > 1
 
-    // Reset index when date changes
+    // Reset index and reschedule picker when date changes
     useEffect(() => {
         setCurrentIndex(0)
+        setShowReschedulePicker(false)
     }, [dateStr])
+
+    // Close reschedule picker when navigating between tasks
+    useEffect(() => {
+        setShowReschedulePicker(false)
+    }, [currentIndex])
 
     // Close on ESC
     useEffect(() => {
@@ -108,6 +118,31 @@ function TaskPopupModal({ dateStr, tasks = [], onClose, onAddTask, onTaskUpdated
             }
         } catch (e) {
             console.error('Failed to delete task:', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleRescheduleClick = () => {
+        setRescheduleDate(currentTask ? parseISO(currentTask.scheduledDate) : new Date())
+        setShowReschedulePicker(true)
+    }
+
+    const handleRescheduleConfirm = async () => {
+        if (!rescheduleDate || !currentTask || loading) return
+        const newDateStr = format(rescheduleDate, 'yyyy-MM-dd')
+        if (newDateStr === currentTask.scheduledDate) {
+            setShowReschedulePicker(false)
+            return
+        }
+        setLoading(true)
+        try {
+            await updateTask(currentTask.id, { scheduledDate: newDateStr, autoScheduled: false })
+            if (onTaskUpdated) onTaskUpdated()
+            setShowReschedulePicker(false)
+            if (dateTasks.length <= 1) onClose()
+        } catch (e) {
+            console.error('Failed to reschedule task:', e)
         } finally {
             setLoading(false)
         }
@@ -246,25 +281,63 @@ function TaskPopupModal({ dateStr, tasks = [], onClose, onAddTask, onTaskUpdated
                     </div>
                 )}
 
+                {/* Reschedule date picker */}
+                {showReschedulePicker && (
+                    <div className="task-popup-reschedule-picker">
+                        <h4>Select new date</h4>
+                        <DatePicker
+                            selected={rescheduleDate}
+                            onChange={(date) => setRescheduleDate(date)}
+                            inline
+                            minDate={new Date()}
+                            dateFormat="yyyy-MM-dd"
+                        />
+                        <div className="task-popup-picker-actions">
+                            <button
+                                onClick={handleRescheduleConfirm}
+                                disabled={loading}
+                                className="task-popup-picker-confirm"
+                            >
+                                {loading ? 'Saving…' : 'Confirm'}
+                            </button>
+                            <button
+                                onClick={() => setShowReschedulePicker(false)}
+                                className="task-popup-picker-cancel"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Action buttons */}
-                <div className="task-popup-actions">
-                    {!currentTask.completed && (
+                {!showReschedulePicker && (
+                    <div className="task-popup-actions">
+                        {!currentTask.completed && (
+                            <button
+                                onClick={handleComplete}
+                                disabled={loading}
+                                className="task-popup-btn-primary"
+                            >
+                                {loading ? 'Saving…' : '✓ Complete'}
+                            </button>
+                        )}
                         <button
-                            onClick={handleComplete}
+                            onClick={handleRescheduleClick}
                             disabled={loading}
-                            className="task-popup-btn-primary"
+                            className="task-popup-btn-reschedule"
                         >
-                            {loading ? 'Saving…' : '✓ Complete'}
+                            📅 Reschedule
                         </button>
-                    )}
-                    <button
-                        onClick={handleDelete}
-                        disabled={loading}
-                        className="task-popup-btn-delete"
-                    >
-                        🗑 Delete
-                    </button>
-                </div>
+                        <button
+                            onClick={handleDelete}
+                            disabled={loading}
+                            className="task-popup-btn-delete"
+                        >
+                            🗑 Delete
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )

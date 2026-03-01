@@ -2317,6 +2317,166 @@ input[type="checkbox"] {
   }
 }
 
+/* ── Mobile: Prevent Text Selection on Calendar ── */
+@media (max-width: 767px) {
+  .calendar-no-select,
+  .calendar-no-select * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── Reschedule Date Picker in TaskPopupModal ── */
+.task-popup-reschedule-picker {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.task-popup-reschedule-picker h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.task-popup-reschedule-picker .react-datepicker {
+  border: 1px solid var(--border-medium);
+  background: var(--bg-secondary);
+  font-family: inherit;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-popup-reschedule-picker .react-datepicker__header {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px;
+}
+
+.task-popup-reschedule-picker .react-datepicker__current-month {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.task-popup-reschedule-picker .react-datepicker__day-name {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.task-popup-reschedule-picker .react-datepicker__day {
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.task-popup-reschedule-picker .react-datepicker__day:hover {
+  background: rgba(198, 120, 221, 0.15);
+  color: var(--text-primary);
+}
+
+.task-popup-reschedule-picker .react-datepicker__day--selected {
+  background: var(--purple-primary) !important;
+  color: white !important;
+}
+
+.task-popup-reschedule-picker .react-datepicker__day--today {
+  font-weight: 700;
+  color: var(--purple-primary);
+}
+
+.task-popup-reschedule-picker .react-datepicker__day--disabled {
+  color: var(--text-tertiary);
+  opacity: 0.3;
+}
+
+.task-popup-reschedule-picker .react-datepicker__navigation-icon::before {
+  border-color: var(--text-secondary);
+}
+
+.task-popup-reschedule-picker .react-datepicker__month-container {
+  width: 100%;
+}
+
+.task-popup-reschedule-picker .react-datepicker__week {
+  display: flex;
+  justify-content: space-around;
+}
+
+.task-popup-picker-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.task-popup-picker-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.task-popup-picker-confirm {
+  background: var(--purple-primary);
+  color: white;
+  border: none;
+}
+
+.task-popup-picker-confirm:hover {
+  background: var(--purple-dark);
+}
+
+.task-popup-picker-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+}
+
+.task-popup-picker-cancel:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+/* Reschedule button in popup actions */
+.task-popup-btn-reschedule {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.task-popup-btn-reschedule:hover {
+  background: var(--surface-3);
+  border-color: var(--purple-primary);
+}
+
+@media (max-width: 767px) {
+  .task-popup-btn-reschedule {
+    background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+    color: white;
+    border: none;
+    font-weight: 600;
+  }
+
+  .task-popup-btn-reschedule:hover {
+    opacity: 0.9;
+  }
+}
+
 /* ── Account Management (Profile) ── */
 .profile-account-section {
   display: flex;
