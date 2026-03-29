@@ -13,6 +13,11 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
     const [preferredDays, setPreferredDays] = useState(['Sat', 'Sun'])
     const [loading, setLoading] = useState(false)
 
+    // Backlog mode
+    const [isBacklogMode, setIsBacklogMode] = useState(false)
+    const [timeEstimate, setTimeEstimate] = useState(60)
+    const [taskCategory, setTaskCategory] = useState('chores')
+
     // Recurring task state
     const [isRecurring, setIsRecurring] = useState(false)
     const [recurrenceType, setRecurrenceType] = useState('daily')
@@ -55,6 +60,19 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
     }
 
     async function handleOneOffCreate() {
+        // Backlog mode: save without a scheduled date
+        if (isBacklogMode) {
+            const task = {
+                name: taskName,
+                energyLevel: energyLevel || null,
+                timeEstimate: timeEstimate || null,
+                category: taskCategory || null,
+                autoScheduled: false
+            }
+            await saveTask(task, null)
+            return
+        }
+
         const task = {
             name: taskName,
             energyLevel: energyLevel || null,
@@ -156,6 +174,9 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
         setRecurrenceDays([])
         setRecurrenceInterval(2)
         setSkipDuringMenstrual(false)
+        setIsBacklogMode(false)
+        setTimeEstimate(60)
+        setTaskCategory('chores')
         setLoading(false)
     }
 
@@ -190,6 +211,24 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                 </div>
 
                 <div className="px-4 py-4 md:px-6 md:py-6">
+                    {/* Schedule vs Backlog toggle */}
+                    <div className="sidebar-mode-toggle mb-5">
+                        <button
+                            type="button"
+                            className={`sidebar-mode-btn ${!isBacklogMode ? 'active' : ''}`}
+                            onClick={() => setIsBacklogMode(false)}
+                        >
+                            📅 Schedule
+                        </button>
+                        <button
+                            type="button"
+                            className={`sidebar-mode-btn ${isBacklogMode ? 'active' : ''}`}
+                            onClick={() => setIsBacklogMode(true)}
+                        >
+                            📦 Backlog
+                        </button>
+                    </div>
+
                     <form onSubmit={handleSubmit}>
                         <div className="mb-5">
                             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
@@ -234,8 +273,49 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                             </div>
                         </div>
 
-                        {/* Deadline — only for one-off tasks */}
-                        {!isRecurring && (
+                        {/* Backlog-specific fields */}
+                        {isBacklogMode && (
+                            <>
+                                <div className="mb-5">
+                                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                                        Time Estimate
+                                    </label>
+                                    <select
+                                        value={timeEstimate}
+                                        onChange={(e) => setTimeEstimate(Number(e.target.value))}
+                                        className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
+                                        style={{ background: 'var(--surface-2)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}
+                                    >
+                                        <option value={15}>15 minutes</option>
+                                        <option value={30}>30 minutes</option>
+                                        <option value={60}>1 hour</option>
+                                        <option value={120}>2 hours</option>
+                                        <option value={180}>3+ hours</option>
+                                    </select>
+                                </div>
+                                <div className="mb-5">
+                                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                                        Category
+                                    </label>
+                                    <select
+                                        value={taskCategory}
+                                        onChange={(e) => setTaskCategory(e.target.value)}
+                                        className="w-full px-3 py-2.5 rounded-md text-sm focus:outline-none"
+                                        style={{ background: 'var(--surface-2)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)' }}
+                                    >
+                                        <option value="chores">🏠 Chores</option>
+                                        <option value="admin">📋 Admin</option>
+                                        <option value="personal">💆 Personal</option>
+                                        <option value="work">💼 Work</option>
+                                        <option value="health">🏃 Health</option>
+                                        <option value="social">👥 Social</option>
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Deadline — only for scheduled one-off tasks */}
+                        {!isBacklogMode && !isRecurring && (
                             <div className="mb-5">
                                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                     Deadline (Optional)
@@ -255,8 +335,8 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                             </div>
                         )}
 
-                        {/* Preferred Days — only for one-off tasks */}
-                        {!isRecurring && (
+                        {/* Preferred Days — only for scheduled one-off tasks */}
+                        {!isBacklogMode && !isRecurring && (
                             <div className="mb-5">
                                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                                     Preferred Days (Optional)
@@ -282,28 +362,30 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                         )}
 
                         {/* ── Recurring Task Toggle ── */}
-                        <div className="mb-5 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsRecurring(!isRecurring)}
-                                    className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none"
-                                    style={{ background: isRecurring ? 'var(--purple-primary)' : 'var(--toggle-off)' }}
-                                    role="switch"
-                                    aria-checked={isRecurring}
-                                >
-                                    <span className={`absolute left-0 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                                        isRecurring ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                                    }`} />
-                                </button>
-                                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                    Make this a recurring task
-                                </span>
-                            </label>
-                        </div>
+                        {!isBacklogMode && (
+                            <div className="mb-5 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRecurring(!isRecurring)}
+                                        className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none"
+                                        style={{ background: isRecurring ? 'var(--purple-primary)' : 'var(--toggle-off)' }}
+                                        role="switch"
+                                        aria-checked={isRecurring}
+                                    >
+                                        <span className={`absolute left-0 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                            isRecurring ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                                        }`} />
+                                    </button>
+                                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                        Make this a recurring task
+                                    </span>
+                                </label>
+                            </div>
+                        )}
 
                         {/* ── Recurring Options ── */}
-                        {isRecurring && (
+                        {!isBacklogMode && isRecurring && (
                             <div className="space-y-4 mb-5 p-4 rounded-xl"
                                  style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
 

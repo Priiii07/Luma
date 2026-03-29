@@ -37,7 +37,10 @@ function CalendarDay({ date, fullDate, phase, isOtherMonth, isToday, tasks, onCl
                 style={{
                     background: ps.background,
                     border: isToday ? `2px solid ${ps.border}` : `1px solid ${ps.border}`,
-                    boxShadow: isToday ? `0 0 12px ${ps.background}, 0 4px 8px rgba(0,0,0,0.2)` : 'none'
+                    boxShadow: isToday ? `0 4px 16px rgba(127,119,221,0.45), 0 2px 8px rgba(0,0,0,0.2)` : 'none',
+                    transform: isToday ? 'scale(1.05)' : 'none',
+                    zIndex: isToday ? 20 : 'auto',
+                    position: 'relative'
                 }}
             >
                 <div

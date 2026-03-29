@@ -173,13 +173,23 @@ function ProfileTab({ cycles, preferences, onPreferencesChanged, onDataCleared, 
 
             {/* Appearance */}
             <CollapsibleSection title="Appearance" defaultOpen>
-                <div className="theme-toggle">
-                    <button onClick={() => updateTheme('dark')} className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}>
-                        🌙 Dark
-                    </button>
-                    <button onClick={() => updateTheme('light')} className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}>
-                        ☀️ Light
-                    </button>
+                <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Theme</span>
+                    <select
+                        value={theme}
+                        onChange={e => updateTheme(e.target.value)}
+                        className="text-sm px-3 py-2 rounded-lg border"
+                        style={{
+                            background: 'var(--surface-2)',
+                            border: '1px solid var(--border-medium)',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <option value="light">☀️ Light Mode</option>
+                        <option value="dark">🌙 Dark Mode</option>
+                    </select>
                 </div>
             </CollapsibleSection>
 

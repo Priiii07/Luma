@@ -18,6 +18,7 @@ function Header({ currentPhase, cycleDay, activeTab, onTabChange }) {
     const tabs = [
         { id: 'home', label: 'Home' },
         { id: 'calendar', label: 'Calendar' },
+        { id: 'backlog', label: 'Later' },
         { id: 'tasks', label: 'Tasks' },
         { id: 'profile', label: 'Profile' }
     ]
@@ -36,7 +37,7 @@ function Header({ currentPhase, cycleDay, activeTab, onTabChange }) {
                 <div className="flex items-center gap-3 md:gap-8">
                     <div className="flex items-center gap-2">
                         <h1 className="text-base md:text-xl font-serif italic" style={{ color: 'var(--text-primary)' }}>
-                            🌸 Cycle Planner
+                            🌸 Luma
                         </h1>
                         <span
                             className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
