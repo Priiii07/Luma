@@ -11,18 +11,18 @@ export default {
       },
       colors: {
         ember: {
-          bg: '#0d0d12',
-          card: '#1a1a1f',
-          surface: 'rgba(255,255,255,0.04)',
-          purple: '#c678dd',
-          'purple-dark': '#9b4db0',
-          'purple-light': '#d088ed',
+          bg: '#1F1B2E',
+          card: '#2D2842',
+          surface: 'rgba(255,255,255,0.06)',
+          purple: '#B388FF',
+          'purple-dark': '#9B6FDD',
+          'purple-light': '#D0B3FF',
           terracotta: '#dc643c',
         }
       },
       fontFamily: {
-        serif: ['Instrument Serif', 'Georgia', 'serif'],
-        sans: ['DM Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        serif: ['Playfair Display', 'Georgia', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       }
     },
   },

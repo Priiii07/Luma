@@ -1,39 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent))
+}
+
+function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true
+}
+
+function wasDismissedRecently() {
+    const dismissed = localStorage.getItem('pwa-install-dismissed')
+    if (!dismissed) return false
+    const dismissedAt = parseInt(dismissed, 10)
+    return Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000
+}
 
 function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState(null)
-    const [showPrompt, setShowPrompt] = useState(false)
-    const [isInstalled, setIsInstalled] = useState(false)
-    const [isIOS, setIsIOS] = useState(false)
+    const promptReceivedRef = useRef(false)
+    const [isInstalled, setIsInstalled] = useState(isStandalone)
+    const [isIOS] = useState(isIOSDevice)
+    const [showPrompt, setShowPrompt] = useState(() => {
+        if (isStandalone() || wasDismissedRecently()) return false
+        // iOS: show immediately since beforeinstallprompt never fires
+        if (isIOSDevice()) return true
+        return false
+    })
 
     useEffect(() => {
-        // Check if already installed (standalone mode)
-        if (window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone === true) {
-            setIsInstalled(true)
-            return
-        }
-
-        // Check if user previously dismissed
-        const dismissed = localStorage.getItem('pwa-install-dismissed')
-        if (dismissed) {
-            const dismissedAt = parseInt(dismissed, 10)
-            // Show again after 7 days
-            if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return
-        }
-
-        // Detect iOS (Safari doesn't support beforeinstallprompt)
-        const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-
-        if (isIOSDevice) {
-            setIsIOS(true)
-            setShowPrompt(true)
-            return
-        }
+        if (isInstalled || isIOS || wasDismissedRecently()) return
 
         function handleBeforeInstall(e) {
             e.preventDefault()
+            promptReceivedRef.current = true
             setDeferredPrompt(e)
             setShowPrompt(true)
         }
@@ -47,10 +48,9 @@ function InstallPrompt() {
         window.addEventListener('beforeinstallprompt', handleBeforeInstall)
         window.addEventListener('appinstalled', handleAppInstalled)
 
-        // For Android/Chrome: if beforeinstallprompt hasn't fired after 3s,
-        // show a generic prompt anyway (the event may have fired before React mounted)
+        // Fallback: if beforeinstallprompt hasn't fired after 3s, show generic prompt
         const fallbackTimer = setTimeout(() => {
-            if (!deferredPrompt) {
+            if (!promptReceivedRef.current) {
                 setShowPrompt(true)
             }
         }, 3000)
@@ -60,7 +60,7 @@ function InstallPrompt() {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
             window.removeEventListener('appinstalled', handleAppInstalled)
         }
-    }, [])
+    }, [isInstalled, isIOS])
 
     async function handleInstall() {
         if (deferredPrompt) {
@@ -71,7 +71,6 @@ function InstallPrompt() {
             }
             setDeferredPrompt(null)
         }
-        // If no deferredPrompt (iOS or fallback), the button text will guide the user
     }
 
     function handleDismiss() {
@@ -87,7 +86,7 @@ function InstallPrompt() {
                 <img src="/icons/icon-192.png" alt="App icon" width="40" height="40" />
             </div>
             <div className="install-prompt-text">
-                <strong>Install Cycle Planner</strong>
+                <strong>Install Luma</strong>
                 {isIOS ? (
                     <span>
                         Tap <span style={{ fontSize: '1.1em' }}>⎙</span> Share then "Add to Home Screen"

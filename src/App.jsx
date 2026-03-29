@@ -7,6 +7,7 @@ import HomeTab from "./components/Tabs/HomeTab";
 import CalendarTab from "./components/Tabs/CalendarTab";
 import TasksTab from "./components/Tabs/TasksTab";
 import ProfileTab from "./components/Tabs/ProfileTab";
+import BacklogTab from "./components/Tabs/BacklogTab";
 import TaskSidebar from "./components/Task/TaskSidebar";
 import PeriodSidebar from "./components/Cycle/PeriodSidebar";
 import OnboardingFlow from "./components/Onboarding/OnboardingFlow";
@@ -369,6 +370,15 @@ function App() {
                 onTaskMoved={handleTaskMoved}
                 onDayClick={handleDayClick}
                 onTabChange={setActiveTab}
+              />
+            )}
+
+            {activeTab === 'backlog' && (
+              <BacklogTab
+                tasks={tasks}
+                currentPhaseInfo={currentPhaseInfo}
+                onAddTask={handleAddTask}
+                onTaskClick={setSelectedTask}
               />
             )}
 

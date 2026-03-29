@@ -5,7 +5,6 @@ import {
     parseISO,
     format,
     isSameDay,
-    isWithinInterval,
     getDay
 } from 'date-fns'
 
@@ -179,7 +178,6 @@ export function getMonthDates(year, month) {
     const lastDay = new Date(year, month + 1, 0)
 
     const startDay = getDay(firstDay)
-    const endDay = getDay(lastDay)
 
     const dates = []
 
@@ -194,7 +192,7 @@ export function getMonthDates(year, month) {
     }
 
     // Days from next month
-    const remainingCells = 35 - dates.length // 5 weeks
+    const remainingCells = 42 - dates.length // 6 weeks
     for (let i = 1; i <= remainingCells; i++) {
         dates.push(addDays(lastDay, i))
     }
