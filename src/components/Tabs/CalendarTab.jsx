@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { Settings } from 'lucide-react'
 import Navigation from '../Calendar/Navigation'
 import Legend from '../Calendar/Legend'
 import Calendar from '../Calendar/Calendar'
@@ -19,7 +20,7 @@ function CalendarTab({
                         onClick={() => onTabChange && onTabChange('profile')}
                         title="Settings"
                     >
-                        ⚙️
+                        <Settings size={16} />
                     </button>
                 </div>
             </div>

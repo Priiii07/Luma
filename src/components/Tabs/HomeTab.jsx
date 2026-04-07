@@ -1,4 +1,5 @@
-import { format } from 'date-fns'
+import { useState } from 'react'
+import { format, isToday, parseISO } from 'date-fns'
 import SmartBanner from '../Task/SmartBanner'
 import OverloadBanner from '../OverloadBanner'
 import MissedInstanceBanner from '../MissedInstanceBanner'
@@ -8,10 +9,10 @@ import TaskCard from './TaskCard'
 import { generateInsights } from '../../utils/insightEngine'
 
 const phaseColors = {
-    menstrual: 'rgba(200,60,80,0.8)',
-    follicular: 'rgba(210,140,40,0.8)',
-    ovulation: 'rgba(160,70,220,0.8)',
-    luteal: 'rgba(100,100,130,0.8)'
+    menstrual: 'var(--phase-menstrual-border)',
+    follicular: 'var(--phase-follicular-border)',
+    ovulation: 'var(--phase-ovulation-border)',
+    luteal: 'var(--phase-luteal-border)'
 }
 
 const phaseDescriptions = {
@@ -29,9 +30,17 @@ function HomeTab({
     onSetRescheduleNotification, onOpenReviewPanel, onTabChange
 }) {
     const today = format(new Date(), 'yyyy-MM-dd')
-    const todayTasks = tasks.filter(t => t.scheduledDate === today)
-    const incompleteTodayTasks = todayTasks.filter(t => !t.completed)
-    const completedTodayTasks = todayTasks.filter(t => t.completed)
+    const [selectedDate, setSelectedDate] = useState(today)
+
+    const viewDate = selectedDate
+    const viewTasks = tasks.filter(t => t.scheduledDate === viewDate)
+    const incompleteTodayTasks = viewTasks.filter(t => !t.completed)
+    const completedTodayTasks = viewTasks.filter(t => t.completed)
+
+    const isTodaySelected = viewDate === today
+    const viewDateLabel = isTodaySelected
+        ? "Today's Tasks"
+        : `Tasks · ${format(parseISO(viewDate), 'EEE, MMM d')}`
 
     const phase = currentPhaseInfo?.phase
     const cycleDay = currentPhaseInfo?.cycleDay
@@ -144,19 +153,30 @@ function HomeTab({
                     tasks={tasks}
                     cycles={cycles}
                     onTabChange={onTabChange}
+                    onDayClick={setSelectedDate}
+                    selectedDate={selectedDate}
                 />
             )}
 
-            {/* Today's tasks */}
-            <div className="home-section-title">
-                Today's Tasks ({todayTasks.length})
+            {/* Tasks for selected day */}
+            <div className="home-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{viewDateLabel} ({viewTasks.length})</span>
+                {!isTodaySelected && (
+                    <button
+                        onClick={() => setSelectedDate(today)}
+                        className="text-xs"
+                        style={{ color: 'var(--purple-primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                        ← Today
+                    </button>
+                )}
             </div>
 
-            {todayTasks.length === 0 ? (
+            {viewTasks.length === 0 ? (
                 <div className="home-empty">
                     <span className="home-empty-icon">✨</span>
-                    <p>No tasks scheduled for today</p>
-                    {isOnboarded && (
+                    <p>No tasks scheduled {isTodaySelected ? 'for today' : 'for this day'}</p>
+                    {isOnboarded && isTodaySelected && (
                         <button className="home-add-btn" onClick={onAddTask}>+ Add Task</button>
                     )}
                 </div>

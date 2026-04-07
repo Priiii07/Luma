@@ -1,3 +1,5 @@
+import { Settings } from 'lucide-react'
+
 function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPeriod, onOpenSettings, isOnboarded = true, cyclesLogged = 0 }) {
     return (
         <div
@@ -38,7 +40,7 @@ function Navigation({ month, year, onPrevMonth, onNextMonth, onAddTask, onLogPer
                     title="Settings"
                     aria-label="Open settings"
                 >
-                    ⚙️
+                    <Settings size={16} />
                 </button>
 
                 <button

@@ -1,9 +1,9 @@
 function Legend() {
     const legendItems = [
-        { color: 'var(--phase-menstrual)', border: 'var(--phase-menstrual-border)', label: 'Menstrual', fullLabel: '🟥 Menstrual (Low Energy)' },
-        { color: 'var(--phase-follicular)', border: 'var(--phase-follicular-border)', label: 'Follicular', fullLabel: '🟧 Follicular (Medium Energy)' },
-        { color: 'var(--phase-ovulation)', border: 'var(--phase-ovulation-border)', label: 'Ovulation', fullLabel: '🟪 Ovulation (High Energy)' },
-        { color: 'var(--phase-luteal)', border: 'var(--phase-luteal-border)', label: 'Luteal', fullLabel: '⬜ Luteal (Prep Week)' }
+        { color: 'var(--phase-menstrual)', border: 'var(--phase-menstrual-border)', label: 'Menstrual', fullLabel: 'Menstrual (Low Energy)' },
+        { color: 'var(--phase-follicular)', border: 'var(--phase-follicular-border)', label: 'Follicular', fullLabel: 'Follicular (Medium Energy)' },
+        { color: 'var(--phase-ovulation)', border: 'var(--phase-ovulation-border)', label: 'Ovulation', fullLabel: 'Ovulation (High Energy)' },
+        { color: 'var(--phase-luteal)', border: 'var(--phase-luteal-border)', label: 'Luteal', fullLabel: 'Luteal (Prep Week)' }
     ]
 
     return (
