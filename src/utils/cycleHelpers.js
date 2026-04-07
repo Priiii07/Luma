@@ -335,6 +335,17 @@ export function getCurrentPhaseInfo(cycles) {
     const activeCycle = getActiveCycleForDate(today, cycles)
 
     if (!activeCycle) {
+        // Today is past all logged cycle phase boundaries (user hasn't logged new period yet).
+        // Treat today as still in luteal of the most recent logged cycle.
+        const sorted = [...cycles].sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+        const lastCycle = sorted[0]
+        if (lastCycle && lastCycle.startDate <= today) {
+            return {
+                phase: 'luteal',
+                cycleDay: getCycleDayForDate(today, lastCycle.startDate),
+                cycle: lastCycle
+            }
+        }
         return {
             phase: null,
             cycleDay: null,
@@ -386,6 +397,14 @@ export function getPhaseForDateAdvanced(targetDate, cycles) {
     const daysDiff = differenceInDays(targetDateObj, latestStart)
 
     if (daysDiff > 0) {
+        // Only predict for future dates — never override today/past with a predicted new cycle.
+        // If today or a past date is beyond logged phases, it means the user is in late luteal
+        // waiting to log their next period.
+        const todayStr = format(new Date(), 'yyyy-MM-dd')
+        if (dateStr <= todayStr) {
+            return 'luteal'
+        }
+
         // Future prediction
         const avgCycleLength = calculateAverageCycleLength(cycles)
         const avgMenstrualDuration = calculateAverageMenstrualDuration(cycles)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, addDays } from 'date-fns'
 import DatePicker from 'react-datepicker'
-import { updateTask, deleteTask, completeTask, getTaskHistory, logTaskHistory, getRecurringDefinition, getAllTasks, getAllCycles } from '../../utils/storageHelpers'
+import { updateTask, deleteTask, completeTask, getTaskHistory, logTaskHistory, getRecurringDefinition, getAllTasks, getAllCycles, createTask } from '../../utils/storageHelpers'
 import { scheduleTask } from '../../utils/taskScheduler'
 import { stopRecurringSeries, editRecurringSeries } from '../../utils/recurringEngine'
 
@@ -12,13 +12,16 @@ const ACTION_LABELS = {
     rescheduled: 'Rescheduled',
     completed: 'Completed',
     deleted: 'Deleted',
-    split: 'Split'
+    split: 'Split',
+    extended: 'Extended to'
 }
 
 function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks: allTasks = [], userPreferences = {} }) {
     const [editing, setEditing] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [confirmStopSeries, setConfirmStopSeries] = useState(false)
+    const [extendMode, setExtendMode] = useState(false)
+    const [extendDate, setExtendDate] = useState(null)
     const [loading, setLoading] = useState(false)
     const [history, setHistory] = useState([])
     const [recurringDef, setRecurringDef] = useState(null)
@@ -39,6 +42,8 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
         setEditing(false)
         setConfirmDelete(false)
         setConfirmStopSeries(false)
+        setExtendMode(false)
+        setExtendDate(null)
         setRecurringDef(null)
         loadHistory(task.id)
         if (task.recurringDefinitionId) {
@@ -160,6 +165,36 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
             onClose()
         } catch (e) {
             console.error('Failed to stop recurring series:', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleExtend() {
+        if (!extendDate) return
+        setLoading(true)
+        try {
+            const newDateStr = format(extendDate, 'yyyy-MM-dd')
+            await createTask({
+                name: task.name,
+                energyLevel: task.energyLevel || null,
+                deadline: task.deadline || null,
+                scheduledDate: newDateStr,
+                preferredDays: task.preferredDays || null,
+                completed: false,
+                autoScheduled: false,
+                extendedFromId: task.id,
+                extendedFromDate: task.scheduledDate || null
+            })
+            await logTaskHistory(task.id, 'extended', {
+                to: newDateStr
+            })
+            if (onSaved) await onSaved()
+            setExtendMode(false)
+            setExtendDate(null)
+            onClose()
+        } catch (e) {
+            console.error('Failed to extend task:', e)
         } finally {
             setLoading(false)
         }
@@ -428,6 +463,37 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
                                     Cancel
                                 </button>
                             </div>
+                        ) : extendMode ? (
+                            <div className="space-y-3">
+                                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                    Pick a date to continue this task. A new copy will be added on that day — the original stays as-is.
+                                </p>
+                                <DatePicker
+                                    selected={extendDate}
+                                    onChange={(date) => setExtendDate(date)}
+                                    dateFormat="MMM d, yyyy"
+                                    minDate={addDays(new Date(), 1)}
+                                    placeholderText="Choose date…"
+                                    className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleExtend}
+                                        disabled={loading || !extendDate}
+                                        className="flex-1 py-2.5 text-white text-sm font-medium rounded-xl disabled:opacity-40"
+                                        style={{ background: 'linear-gradient(135deg, var(--purple-primary), var(--purple-dark))' }}
+                                    >
+                                        {loading ? 'Extending…' : 'Extend Task'}
+                                    </button>
+                                    <button
+                                        onClick={() => { setExtendMode(false); setExtendDate(null) }}
+                                        className="flex-1 py-2.5 text-sm font-medium rounded-xl"
+                                        style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
                         ) : (
                             <div className="space-y-2">
                                 <div className="flex gap-2">
@@ -456,6 +522,15 @@ function TaskDetailModal({ task, onClose, onSaved, onDeleted, cycles = [], tasks
                                         Delete
                                     </button>
                                 </div>
+                                {!task.completed && (
+                                    <button
+                                        onClick={() => setExtendMode(true)}
+                                        className="w-full py-2 text-xs font-medium rounded-xl"
+                                        style={{ background: 'rgba(180,100,255,0.08)', color: 'var(--purple-primary)', border: '1px solid rgba(180,100,255,0.2)' }}
+                                    >
+                                        ↗ Extend to another day
+                                    </button>
+                                )}
                                 {isRecurring && !task.completed && (
                                     <button
                                         onClick={() => setConfirmStopSeries(true)}
