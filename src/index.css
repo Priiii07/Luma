@@ -1324,18 +1324,18 @@ input[type="checkbox"] {
 }
 
 .task-card-energy.low {
-  background: rgba(80,160,220,0.15);
-  color: #50a0dc;
+  background: var(--phase-luteal);
+  color: var(--phase-luteal-border);
 }
 
 .task-card-energy.medium {
-  background: rgba(220,140,60,0.15);
-  color: #dc8c3c;
+  background: var(--phase-follicular);
+  color: var(--phase-follicular-border);
 }
 
 .task-card-energy.high {
-  background: rgba(198,120,221,0.15);
-  color: var(--purple-primary);
+  background: var(--phase-ovulation);
+  color: var(--phase-ovulation-border);
 }
 
 .task-card-deadline {
@@ -1860,23 +1860,19 @@ input[type="checkbox"] {
 
 /* ── Insight Banner ── */
 .insight-banner {
-  padding: 14px 16px;
-  border-radius: 12px;
+  padding: 16px 20px;
+  border-radius: 16px;
   margin: 0 0 12px 0;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: flex-start;
-  border: 1px solid transparent;
-}
-
-.insight-banner.phase {
-  background: rgba(96,165,250,0.1);
-  border-color: rgba(96,165,250,0.2);
+  background: linear-gradient(135deg, rgba(244,197,66,0.15), rgba(180,100,255,0.15));
+  border: 1px solid rgba(244,197,66,0.3);
 }
 
 .insight-banner.opportunity {
-  background: rgba(251,191,36,0.1);
-  border-color: rgba(251,191,36,0.2);
+  background: linear-gradient(135deg, rgba(180,100,255,0.15), rgba(96,165,250,0.15));
+  border-color: rgba(180,100,255,0.3);
 }
 
 .banner-icon {
@@ -1894,15 +1890,15 @@ input[type="checkbox"] {
   font-size: 13px;
   color: var(--text-primary);
   line-height: 1.5;
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
 }
 
 .banner-action {
   padding: 5px 12px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(127,119,221,0.15);
+  border: 1px solid rgba(127,119,221,0.3);
   border-radius: 6px;
-  color: var(--text-primary);
+  color: var(--purple-primary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -1910,7 +1906,7 @@ input[type="checkbox"] {
 }
 
 .banner-action:hover {
-  background: rgba(255,255,255,0.14);
+  background: rgba(127,119,221,0.25);
 }
 
 .banner-dismiss {
@@ -1932,26 +1928,6 @@ input[type="checkbox"] {
 .banner-dismiss:hover {
   background: rgba(255,255,255,0.08);
   color: var(--text-primary);
-}
-
-[data-theme="light"] .insight-banner.phase {
-  background: rgba(59,130,246,0.08);
-  border-color: rgba(59,130,246,0.2);
-}
-
-[data-theme="light"] .insight-banner.opportunity {
-  background: rgba(245,158,11,0.08);
-  border-color: rgba(245,158,11,0.2);
-}
-
-[data-theme="light"] .banner-action {
-  background: rgba(0,0,0,0.05);
-  border-color: rgba(0,0,0,0.12);
-  color: var(--text-primary);
-}
-
-[data-theme="light"] .banner-action:hover {
-  background: rgba(0,0,0,0.08);
 }
 
 [data-theme="light"] .banner-dismiss {
@@ -2009,9 +1985,18 @@ input[type="checkbox"] {
   transition: background 0.2s;
 }
 
+.week-preview-day:hover {
+  background: var(--surface-2);
+}
+
 .week-preview-day.today {
   background: rgba(198,120,221,0.12);
   border: 1px solid rgba(198,120,221,0.25);
+}
+
+.week-preview-day.selected:not(.today) {
+  background: var(--surface-2);
+  border: 1px solid var(--border-medium);
 }
 
 .week-preview-day-label {

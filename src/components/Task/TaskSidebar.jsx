@@ -97,7 +97,7 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
     async function handleRecurringCreate() {
         const recurrence = {
             type: recurrenceType,
-            interval: recurrenceType === 'custom' ? recurrenceInterval : 1,
+            interval: recurrenceType === 'custom' ? Math.max(2, parseInt(recurrenceInterval, 10) || 2) : 1,
             preferredDays: recurrenceType === 'weekly' ? recurrenceDays : []
         }
 
@@ -463,7 +463,19 @@ function TaskSidebar({ isOpen, onClose, onTaskCreated, cycles = [], tasks = [], 
                                                 min={2}
                                                 max={30}
                                                 value={recurrenceInterval}
-                                                onChange={e => setRecurrenceInterval(Math.max(2, parseInt(e.target.value) || 2))}
+                                                onChange={e => {
+                                                    const raw = e.target.value
+                                                    if (raw === '') {
+                                                        setRecurrenceInterval('')
+                                                    } else {
+                                                        const num = parseInt(raw, 10)
+                                                        if (!isNaN(num)) setRecurrenceInterval(num)
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    const num = parseInt(recurrenceInterval, 10)
+                                                    setRecurrenceInterval(isNaN(num) || num < 2 ? 2 : Math.min(num, 30))
+                                                }}
                                                 className="w-20 px-3 py-2 rounded-md text-sm text-center focus:outline-none"
                                                 style={{
                                                     background: 'var(--surface-2)',

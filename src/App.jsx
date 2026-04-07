@@ -273,9 +273,7 @@ function App() {
   };
 
   const handleDayClick = (dateStr) => {
-    if (window.innerWidth < 768) {
-      setPopupDateStr(dateStr);
-    }
+    setPopupDateStr(dateStr);
   };
 
   const handleMissedDismiss = async (task) => {

@@ -15,7 +15,7 @@ const phaseLabels = {
     luteal: 'L'
 }
 
-export default function WeekPreview({ tasks, cycles, onTabChange }) {
+export default function WeekPreview({ tasks, cycles, onTabChange, onDayClick, selectedDate }) {
     const today = format(new Date(), 'yyyy-MM-dd')
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }) // Monday start
 
@@ -52,7 +52,9 @@ export default function WeekPreview({ tasks, cycles, onTabChange }) {
                 {days.map(day => (
                     <div
                         key={day.dateStr}
-                        className={`week-preview-day ${day.isToday ? 'today' : ''}`}
+                        className={`week-preview-day ${day.isToday ? 'today' : ''} ${selectedDate === day.dateStr ? 'selected' : ''}`}
+                        onClick={() => onDayClick && onDayClick(day.dateStr)}
+                        style={{ cursor: onDayClick ? 'pointer' : 'default' }}
                     >
                         <span className="week-preview-day-label">{day.dayLabel}</span>
                         <span className={`week-preview-day-num ${day.isToday ? 'today' : ''}`}>
